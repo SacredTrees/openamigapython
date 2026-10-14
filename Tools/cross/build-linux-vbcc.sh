@@ -4,6 +4,11 @@ set -euo pipefail
 project_root=$(cd "$(dirname "$0")/../.." && pwd)
 build_target=${1:-standard}
 
+if grep -q '^#define AC_BUILD[[:space:]]\+4' "$project_root/Source/Include/patchlevel.h"; then
+    echo "ac4 is GCC 16.2-open2 only; the VBCC builder is for ac3-classic" >&2
+    exit 2
+fi
+
 case "$build_target" in
     standard|debug)
         ;;

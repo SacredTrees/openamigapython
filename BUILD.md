@@ -88,21 +88,43 @@ python27 AmigaTests/run.py ssl ssl_net
 
 Expect `OPENSSL_VERSION` to show AmiTLS or OpenSSL/AmiSSL text accordingly.
 
-## Compiler 
+## Compiler
 
-The current AmigaPython 2.7.18 requires VBCC
+The ac4 development line requires the verified GCC 16.2-open2 stove.
 
 | SAS/C | VBCC | GCC |
 |-------|------|-----|
-| [ ]   | [X]  | [ ] |
+| [ ]   | [ ]  | [X] |
 
-Additional compiler options may be added in the future.
+The preserved `ac3-classic` branch uses VBCC + PosixLib. ac4 is a separate GCC
+16.2-open2-only product line and must not silently fall back to another GCC or
+to ac3 VBCC objects.
 
-That table describes ac3-classic. The ac4 build is a separate GCC
-16.2-open2-only product line; it must not silently fall back to another GCC or
-to the ac3 VBCC objects.
+Before compiling any ac4 object, verify the complete compiler, front ends,
+runtime libraries and OpenAmigaGCC patch set against the pinned provenance
+manifest:
 
-## How To Build
+```sh
+python3 Tools/cross/check_gcc_open2.py
+```
+
+The compiler's upstream version text is `16.2.0b`; it does not itself contain
+the OpenAmiga release label. The gate therefore also checks the dated compiler
+build, `cc1`, `cc1plus`, patched libnix/libpthread archives and the GCC 0001-0010,
+libnix 0001-0006 and pthread 0001-0004 patch files by SHA-256. ac4 sources also
+require `OPENAMIGA_GCC_OPEN2` at compile time, so bypassing the gate with VBCC
+or a generic GCC fails in `pyconfig.h`.
+
+## How To Build ac4
+
+The ac4 makefile conversion follows the provenance gate above. Until that
+conversion is complete, the repository intentionally has no command that can
+produce an ac4 binary: the VBCC builder refuses ac4 and `pyconfig.h` rejects any
+compiler invocation that does not carry the verified-open2 build definition.
+
+## How To Build ac3-classic
+
+Check out the `ac3-classic` branch, then use the classic ToolKit assignments:
 
 ```
 Assign Python: Source/

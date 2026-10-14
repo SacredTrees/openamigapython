@@ -1,6 +1,18 @@
 #ifndef Py_PYCONFIG_H
 #define Py_PYCONFIG_H
 
+#ifndef AC_BUILD
+# include "patchlevel.h"
+#endif
+
+/* ac4 is an AmigaChrome-native ABI and must never be produced accidentally
+ * by the ac3 VBCC path or by an unverified generic GCC installation. */
+#if AC_BUILD >= 4
+# if !defined(__GNUC__) || !defined(OPENAMIGA_GCC_OPEN2)
+#  error "OpenAmigaPython ac4 requires verified GCC 16.2-open2"
+# endif
+#endif
+
 /* pyconfig_amiga.h - Python configuration for Amiga platforms */
 /* Based on the older Amiga port by Irmen de Jong */
 /* Updated for Python 2.7.18 */
