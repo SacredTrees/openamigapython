@@ -23,7 +23,7 @@ OBJECTS = modsupport.o pythonrun.o errors.o bltinmodule.o \
 	ast.o asdl.o _warnings.o \
 	getopt.o random.o mysnprintf.o pystrtod.o pyfpe.o pymath.o \
 	Python-ast.o pyarena.o pyctype.o symtable.o mystrtoul.o \
-	pystrcmp.o future.o peephole.o formatter_string.o
+	pystrcmp.o future.o peephole.o formatter_string.o formatter_unicode.o
 
 # Convert to full paths
 OBJ=$(patsubst %,$(ODIR)/%,$(OBJECTS))

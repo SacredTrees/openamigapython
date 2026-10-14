@@ -87,7 +87,9 @@ extern void init_heapq(void);
 extern void init_csv(void);
 extern void initpyexpat(void);
 #endif
-/* extern void initunicodedata(void); */
+#ifndef PYAMIGA_SLIM
+extern void initunicodedata(void);
+#endif
 
 /* Amiga-specific modules (both builds) */
 extern void initamiga(void);
@@ -155,7 +157,9 @@ struct _inittab _PyImport_Inittab[] = {
     /* XML: statically linked Modules/expat (see vmakefile.modules). */
     {"pyexpat", initpyexpat},
 #endif
-    /* {"unicodedata", initunicodedata}, */
+#ifndef PYAMIGA_SLIM
+    {"unicodedata", initunicodedata},
+#endif
 
 #if !defined(PYAMIGA_SLIM) && defined(AMITCP) /* || defined(INET225) */
     /* Network / usergroup extras (not _socket — that is LoadSeg'd) */

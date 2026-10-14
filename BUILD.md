@@ -2,6 +2,12 @@
 
 Follow these instructions to build AmigaPython.
 
+## Release lines
+
+- `ac3-classic`: AmigaOS 3.2.3-friendly, built with VBCC + PosixLib.
+- `ac4`: AmigaChrome-native and built only after the GCC 16.2-open2 provenance
+  gate succeeds. ac4 does not promise ABI or binary compatibility with ac3.
+
 ## ToolKit
 
 Building AmigaPython is most easily achieved if your development environment is setup following the ToolKit standard. See ToolKit.md or https://github.com/amigazen/ToolKit
@@ -91,6 +97,10 @@ The current AmigaPython 2.7.18 requires VBCC
 | [ ]   | [X]  | [ ] |
 
 Additional compiler options may be added in the future.
+
+That table describes ac3-classic. The ac4 build is a separate GCC
+16.2-open2-only product line; it must not silently fall back to another GCC or
+to the ac3 VBCC objects.
 
 ## How To Build
 
@@ -194,6 +204,17 @@ Host-side validation is intentionally independent of the cross toolchain:
 
 ```sh
 python3 -m unittest discover -s Tools/tests -v
+```
+
+The ac3 packaging gate also installs a deterministic pure-Python wheel on the
+target with no index or dependency resolution, then validates both importing
+the package and discovering its metadata through `pkg_resources`:
+
+```text
+Python -m pip --disable-pip-version-check --no-python-version-warning \
+  --no-cache-dir install --no-index --no-deps --no-compile \
+  --target wheel-target wheels/acsmoke-1.0-py2-none-any.whl
+Python pip-wheel-smoke.py
 ```
 
 ### Standalone release drawer (`Python/`)

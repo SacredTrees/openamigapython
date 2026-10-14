@@ -157,7 +157,12 @@ def _candidate_tempdir_list():
         if dirname: dirlist.append(dirname)
 
     # Failing that, try OS-specific locations.
-    if _os.name == 'riscos':
+    if _os.sys.platform == 'amiga':
+        # T: is AmigaOS's RAM-backed temporary-file assign.  Trying the
+        # Unix fallback directories first turns each tempfile lookup into
+        # hundreds of failed path probes through PosixLib.
+        dirlist.append('T:')
+    elif _os.name == 'riscos':
         dirname = _os.getenv('Wimp$ScrapDir')
         if dirname: dirlist.append(dirname)
     elif _os.name == 'nt':
@@ -474,14 +479,29 @@ def NamedTemporaryFile(mode='w+b', bufsize=-1, suffix="",
 
     (fd, name) = _mkstemp_inner(dir, prefix, suffix, flags)
     try:
-        file = _os.fdopen(fd, mode, bufsize)
+        if _os.sys.platform == 'amiga':
+            # PosixLib's descriptor returned by open(O_EXCL) cannot be
+            # wrapped reliably by fdopen().  The pathname has already been
+            # created exclusively, so close and reopen that same file.
+            _os.close(fd)
+            fd = None
+            file = open(name, mode, bufsize)
+        else:
+            file = _os.fdopen(fd, mode, bufsize)
         return _TemporaryFileWrapper(file, name, delete)
     except BaseException:
-        _os.unlink(name)
-        _os.close(fd)
+        if _os.sys.platform == 'amiga':
+            # Amiga files cannot be unlinked while the descriptor is open.
+            if fd is not None:
+                _os.close(fd)
+            _os.unlink(name)
+        else:
+            _os.unlink(name)
+            _os.close(fd)
         raise
 
-if _os.name != 'posix' or _os.sys.platform == 'cygwin':
+if (_os.name != 'posix' or _os.sys.platform == 'cygwin' or
+        _os.sys.platform == 'amiga'):
     # On non-POSIX and Cygwin systems, assume that we cannot unlink a file
     # while it is open.
     TemporaryFile = NamedTemporaryFile

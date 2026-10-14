@@ -78,16 +78,20 @@ struct _arena {
 static block *
 block_new(size_t size)
 {
-    /* Allocate header and block as one unit.
-       ab_mem points just past header. */
-    block *b = (block *)malloc(sizeof(block) + size);
+    Py_uintptr_t memory;
+    /* Allocate alignment slop as well as the requested payload.  Classic
+       malloc only guarantees four-byte alignment, while the AST arena uses
+       eight-byte alignment.  Without the slop, a one-off allocation of
+       exactly `size` bytes loses up to seven bytes when ab_mem is aligned
+       and trips block_alloc's bounds assertion for large source units. */
+    block *b = (block *)malloc(sizeof(block) + size + ALIGNMENT_MASK);
     if (!b)
         return NULL;
     b->ab_size = size;
-    b->ab_mem = (void *)(b + 1);
+    memory = ROUNDUP((Py_uintptr_t)(b + 1));
+    b->ab_mem = (void *)memory;
     b->ab_next = NULL;
-    b->ab_offset = ROUNDUP((Py_uintptr_t)(b->ab_mem)) -
-      (Py_uintptr_t)(b->ab_mem);
+    b->ab_offset = 0;
     return b;
 }
 

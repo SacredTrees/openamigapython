@@ -6,6 +6,28 @@ import os
 from os.path import pardir, realpath
 
 _INSTALL_SCHEMES = {
+    # OpenAmigaPython is a relocatable drawer: the stdlib ZIP, unpacked
+    # site-packages, scripts and data all live below the interpreter prefix.
+    'amiga': {
+        'stdlib': '{base}/lib',
+        'platstdlib': '{platbase}/lib',
+        'purelib': '{base}/lib/site-packages',
+        'platlib': '{platbase}/lib/site-packages',
+        'include': '{base}/include/python{py_version_short}',
+        'platinclude': '{platbase}/include/python{py_version_short}',
+        'scripts': '{base}',
+        'data': '{base}',
+        },
+    'amiga_user': {
+        'stdlib': '{userbase}/lib',
+        'platstdlib': '{userbase}/lib',
+        'purelib': '{userbase}/lib/site-packages',
+        'platlib': '{userbase}/lib/site-packages',
+        'include': '{userbase}/include/python{py_version_short}',
+        'platinclude': '{userbase}/include/python{py_version_short}',
+        'scripts': '{userbase}',
+        'data': '{userbase}',
+        },
     'posix_prefix': {
         'stdlib': '{base}/lib/python{py_version_short}',
         'platstdlib': '{platbase}/lib/python{py_version_short}',
@@ -95,6 +117,11 @@ _CONFIG_VARS = None
 _USER_BASE = None
 
 def _safe_realpath(path):
+    # Amiga volume paths (for example Work:OpenAmigaPython/Python) are not
+    # POSIX symlink paths. posixpath.realpath() can repeatedly feed the volume
+    # prefix back through readlink(), so preserve the native executable path.
+    if sys.platform.startswith('amiga'):
+        return path
     try:
         return realpath(path)
     except OSError:

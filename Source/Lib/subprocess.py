@@ -37,7 +37,16 @@ import os
 import types
 import traceback
 import gc
-import signal
+try:
+    import signal
+except ImportError:
+    # OpenAmigaPython has no POSIX signal module.  Keep subprocess importable
+    # for libraries such as pip that only use its helpers and exception types;
+    # actual process signalling remains unavailable through os.kill().
+    class _SignalConstants(object):
+        SIGKILL = 9
+        SIGTERM = 15
+    signal = _SignalConstants()
 import errno
 
 # Exception classes used by this module.
@@ -75,7 +84,21 @@ else:
         import threading
     except ImportError:
         threading = None
-    import fcntl
+    try:
+        import fcntl
+    except ImportError:
+        # AmigaOS has no POSIX fcntl module.  These names keep the module
+        # importable for package managers that do not actually launch a
+        # child process; Popen still fails explicitly if it reaches fcntl.
+        class _UnsupportedFcntl(object):
+            FD_CLOEXEC = 1
+            F_GETFD = 1
+            F_SETFD = 2
+
+            @staticmethod
+            def fcntl(*args):
+                raise NotImplementedError("fcntl is unavailable on AmigaOS")
+        fcntl = _UnsupportedFcntl()
     import pickle
 
     # When select or poll has indicated that the file is writable,
@@ -117,6 +140,10 @@ def _cleanup():
 
 PIPE = -1
 STDOUT = -2
+
+
+def _unsupported_waitpid(pid, options):
+    raise OSError(errno.ENOSYS, "waitpid is unavailable on AmigaOS")
 
 
 def _eintr_retry_call(func, *args):
@@ -1047,10 +1074,14 @@ class Popen(object):
                 raise child_exception
 
 
-        def _handle_exitstatus(self, sts, _WIFSIGNALED=os.WIFSIGNALED,
-                _WTERMSIG=os.WTERMSIG, _WIFEXITED=os.WIFEXITED,
-                _WEXITSTATUS=os.WEXITSTATUS, _WIFSTOPPED=os.WIFSTOPPED,
-                _WSTOPSIG=os.WSTOPSIG):
+        def _handle_exitstatus(
+                self, sts,
+                _WIFSIGNALED=getattr(os, 'WIFSIGNALED', lambda status: False),
+                _WTERMSIG=getattr(os, 'WTERMSIG', lambda status: status),
+                _WIFEXITED=getattr(os, 'WIFEXITED', lambda status: True),
+                _WEXITSTATUS=getattr(os, 'WEXITSTATUS', lambda status: status),
+                _WIFSTOPPED=getattr(os, 'WIFSTOPPED', lambda status: False),
+                _WSTOPSIG=getattr(os, 'WSTOPSIG', lambda status: status)):
             # This method is called (indirectly) by __del__, so it cannot
             # refer to anything outside of its local scope.
             if _WIFSIGNALED(sts):
@@ -1064,8 +1095,11 @@ class Popen(object):
                 raise RuntimeError("Unknown child exit status!")
 
 
-        def _internal_poll(self, _deadstate=None, _waitpid=os.waitpid,
-                _WNOHANG=os.WNOHANG, _os_error=os.error, _ECHILD=errno.ECHILD):
+        def _internal_poll(
+                self, _deadstate=None,
+                _waitpid=getattr(os, 'waitpid', _unsupported_waitpid),
+                _WNOHANG=getattr(os, 'WNOHANG', 1),
+                _os_error=os.error, _ECHILD=errno.ECHILD):
             """Check if child process has terminated.  Returns returncode
             attribute.
 

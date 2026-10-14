@@ -23,7 +23,7 @@ OBJECTS = abstract.o fileobject.o floatobject.o bufferobject.o \
 	weakrefobject.o \
 	bytearrayobject.o bytes_methods.o capsule.o descrobject.o \
 	enumobject.o genobject.o memoryobject.o obmalloc.o \
-	setobject.o structseq.o
+	setobject.o structseq.o unicodeobject.o unicodectype.o
 
 # Convert to full paths
 OBJ=$(patsubst %,$(ODIR)/%,$(OBJECTS))

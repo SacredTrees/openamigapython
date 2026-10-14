@@ -21,6 +21,10 @@
 const char *Py_FileSystemDefaultEncoding = "mbcs";
 #elif defined(__APPLE__)
 const char *Py_FileSystemDefaultEncoding = "utf-8";
+#elif defined(_AMIGA)
+/* Classic AmigaDOS paths are byte strings.  Latin-1 preserves every byte
+   when Python packaging code needs a concrete filesystem codec. */
+const char *Py_FileSystemDefaultEncoding = "latin-1";
 #else
 const char *Py_FileSystemDefaultEncoding = NULL; /* use default */
 #endif

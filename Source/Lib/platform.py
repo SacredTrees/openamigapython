@@ -1349,7 +1349,7 @@ def processor():
 ### Various APIs for extracting information from sys.version
 
 _sys_version_parser = re.compile(
-    r'([\w.+]+)\s*'  # "version<space>"
+    r'([\w.+-]+)\s*'  # "version<space>" (OpenAmigaPython has -acN)
     r'\(#?([^,]+)'  # "(#buildno"
     r'(?:,\s*([\w ]*)'  # ", builddate"
     r'(?:,\s*([\w :]*))?)?\)\s*'  # ", buildtime)<space>"

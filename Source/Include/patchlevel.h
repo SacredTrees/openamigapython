@@ -28,8 +28,8 @@
 
 /* Version as a string.  Keep the CPython compatibility fields above at
    2.7.18; AC_BUILD identifies the OpenAmigaPython distribution build. */
-#define AC_BUILD               2
-#define AC_BUILD_TAG           "ac2"
+#define AC_BUILD               3
+#define AC_BUILD_TAG           "ac3"
 #define PY_VERSION_BASE        "2.7.18"
 #define PY_VERSION             PY_VERSION_BASE "-" AC_BUILD_TAG
 /*--end constants--*/

@@ -49,6 +49,11 @@ knownfiles = [
     "/usr/local/etc/mime.types",                # Apache 1.3
     ]
 
+if sys.platform == 'amiga':
+    # The built-in table is the Amiga default.  Unix absolute paths are not
+    # meaningful AmigaDOS locations and probing all of them is very costly.
+    knownfiles = []
+
 inited = False
 _db = None
 

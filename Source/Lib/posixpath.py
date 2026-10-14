@@ -415,6 +415,11 @@ def abspath(path):
 def realpath(filename):
     """Return the canonical path of the specified filename, eliminating any
 symbolic links encountered in the path."""
+    # Amiga volume/assign paths are already canonical for Python's purposes.
+    # Feeding "Volume:path" through the POSIX symlink walker can repeatedly
+    # probe a malformed path through PosixLib and never return.
+    if _amiga:
+        return abspath(filename)
     path, ok = _joinrealpath('', filename, {})
     return abspath(path)
 

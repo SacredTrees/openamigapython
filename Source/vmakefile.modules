@@ -57,7 +57,8 @@ EXTRA_OBJECTS = \
     pyexpat.o \
     xmlparse.o \
     xmlrole.o \
-    xmltok.o
+    xmltok.o \
+    unicodedata.o
 
 OBJECTS = $(COMMON_OBJECTS) $(EXTRA_OBJECTS)
 
@@ -332,9 +333,9 @@ $(ODIR)/_csv.o: $(SRCDIR)/_csv.c
 	@$(MKDIR) $(ODIR)
 	$(CC) $(CONFIG) $(CFLAGS) -o $@ $<
 
-# $(ODIR)/unicodedata.o: $(SRCDIR)/unicodedata.c
-#	@$(MKDIR) $(ODIR)
-#	$(CC) $(CONFIG) $(CFLAGS) -o $@ $<
+$(ODIR)/unicodedata.o: $(SRCDIR)/unicodedata.c
+	@$(MKDIR) $(ODIR)
+	$(CC) $(CONFIG) $(CFLAGS) -o $@ $<
 
 $(ODIR)/ARexxmodule.o: $(SRCDIR)/ARexxmodule.c
 	@$(MKDIR) $(ODIR)

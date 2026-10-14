@@ -1,6 +1,6 @@
 # AmigaPython 2
 
-This is OpenAmigaPython **2.7.18-ac2**, a port of **Python 2.7.18** to Amiga - continuing Irmen de Jong's AmigaPython work on his original Aminet AmigaPython releases 1.4, 1.5 and 2.0. The `acN` suffix is the OpenAmigaPython build number; Python compatibility remains 2.7.18.
+This is OpenAmigaPython **2.7.18-ac3**, a port of **Python 2.7.18** to Amiga - continuing Irmen de Jong's AmigaPython work on his original Aminet AmigaPython releases 1.4, 1.5 and 2.0. The `acN` suffix is the OpenAmigaPython build number; Python compatibility remains 2.7.18.
 
 ## [amigazen project](http://www.amigazen.com)
 
@@ -37,6 +37,15 @@ This project is **not** the Python that ships with OS4 but does implement the sa
 - A **ToolKit-buildable** Python 2.7 for classic 68k Amiga using VBCC and PosixLib
 - Networking against modern **bsdsocket.library** (e.g. Roadshow)
 - Amiga integration that feels native: AmigaDOS / ASL / catalogs / icons / ARexx, documented in Library Reference-style reST
+
+### Maintained release lines
+
+- **ac3-classic** is the AmigaOS 3.2.3-friendly compatibility line. It uses
+  VBCC + PosixLib and keeps the classic Amiga runtime contract.
+- **ac4** is the AmigaChrome-native line. It is built only with
+  **GCC 16.2-open2**, may use AmigaChrome services and acceleration directly,
+  and makes no ABI, binary-wheel, layout, or runtime compatibility promise to
+  ac3.
 
 Official upstream docs: https://docs.python.org/2.7/
 
@@ -76,8 +85,8 @@ Relative to the classic AmigaPython **2.0** baseline, upstream Python 2 gained r
 |------|--------|
 | Toolchain | **VBCC + PosixLib** / NDK 3.2 |
 | Networking | **bsdsocket.library** (Roadshow and friends); I-Net225 no longer supported |
-| I/O | Builtin **`_io`** so `io` / `tempfile` work (Amiga-friendly text path when Unicode is off) |
-| Packaging | `zipimport` + `lib/python27.zip`-style stdlib; `_socket` and `_ssl` as dynload plugins |
+| I/O | Builtin **`_io`**, UCS-2 Unicode, Latin-1 filesystem encoding, and Amiga-safe `io` / `tempfile` paths |
+| Packaging | `zipimport` stdlib plus bundled pip 20.3.4, setuptools 44.1.1 and wheel 0.37.1; `_socket` and `_ssl` as dynload plugins |
 | `amiga` | Expanded POSIX-style surface (`access`, `sleep`/`usleep`, `waitpid`, `pathconf`/`sysconf`, `urandom`, `fsync`, `closerange`, etc.) |
 | Dos helpers | Former Doslib / `_amigados` (`ArgParser`, `FIBF_*`, `touch`, Assign helpers) on `amiga` |
 | Paths | `amiga.to_unix` / `amiga.from_unix` |
@@ -130,7 +139,7 @@ Several independent efforts bring Python (or a Python-like language) to Amiga-fa
 | **Platform** | Classic **68k** AmigaOS 3.x | **PowerPC** AmigaOS 4.1 (sam460ex / QEMU / hardware) | Classic **68020+** AmigaOS (and emulators) |
 | **Lineage** | Aminet AmigaPython 2.0 updated to CPython 2.7 | New OS4 CPython port (not this repo) | Separate MicroPython port |
 | **Build** | Native Amiga / ToolKit (**VBCC + PosixLib**; SAS/C where useful) | Cross-compile from Linux/macOS via **Docker** (GCC) | Cross-compile with **bebbo m68k-amigaos-gcc** |
-| **Language model** | Python 2 (`str` as bytes; Unicode optional / often off) | Full Python 3 (Unicode-centric) | MicroPython dialect (f-strings, async) |
+| **Language model** | Python 2 (`str` as bytes; UCS-2 `unicode`) | Full Python 3 (Unicode-centric) | MicroPython dialect (f-strings, async) |
 | **Stdlib / packaging** | 2.7 library + zipimport; Amiga site-python | Broad 3.12 stdlib; **pip** for pure-Python wheels | Curated MicroPython modules + `.mpy` bytecode |
 | **Networking** | bsdsocket; `_socket` as LoadSeg plugin | bsdsocket; SSL via optional AmiTLS | bsdsocket; HTTPS / SMTP via AmiTLS where enabled |
 | **Amiga APIs** | `amiga`, ARexx, ASL, catalogs, icons, etc. | `_amiga` + `amiga.*` (Exec/DOS/Intuition/...) | `amiga.intuition`, `amiga.asl`, `arexx`, ... |
@@ -155,7 +164,7 @@ This is **CPython 2.7.18** with an Amiga-oriented builtin set. Default `make -f 
 - New-style classes, descriptors, `property`, `super`, decorators, `with` / context managers
 - Generators (`yield`), nested scopes, list/dict/set comprehensions, `str.format()`
 - Exceptions, `gc`, weakrefs, `ast` / `_ast`, warnings
-- Primary text type is 8-bit `str` (see Unicode FAQ); `_io` is built so `io` / `tempfile` work without a full Unicode build
+- Primary text type remains Python 2's 8-bit `str`; UCS-2 `unicode`, codecs and `_io` are enabled
 
 **Shared builtins** (both builds)
 
@@ -189,9 +198,11 @@ These are the important gaps relative to a full CPython 2.7:
 
 **Language / runtime**
 
-- **Full Unicode** off by default (`Py_USING_UNICODE` undefined): no wide `unicode` type as the primary text model; `unicodedata` is not built in
-- **No threads** (`WITH_THREAD` undefined): no `thread` / `threading` as on Unix CPython
-- **Incomplete codecs** when Unicode is off - see the FAQ below
+- **No native OS threads** (`WITH_THREAD` undefined): `threading` imports and
+  provides its CPU0 dummy-thread fallback, but it does not create concurrent
+  Amiga tasks
+- `unicodedata` is part of the standard build; the slim build keeps only the
+  core Unicode runtime and codecs
 
 **OS builtin naming (`amiga` vs `posix`)**
 
@@ -210,48 +221,28 @@ These are the important gaps relative to a full CPython 2.7:
 
 - Not a drop-in for scripts that assume Unix processes, fork, full POSIX signals, or Windows APIs
 - **I-Net225** networking is unsupported; use modern **bsdsocket** (Roadshow, UAE net, ...)
-- `pip` / binary wheels are not a supported distribution story on classic 68k the way they are on OS4's CPython 3
+- Bundled `pip` supports pure-Python `py2-none-any` wheels and Amiga-local
+  paths. Native/binary wheel compatibility is deliberately deferred to the
+  ac4 ABI.
 
 If a pure-Python stdlib module imports a missing C accelerator, that feature fails even though the `.py` file may be on the tree. Prefer AmigaTests and the Amiga docs under `Python/Help/Amiga/` for what is actually exercised.
 
-### Why is the codec / `str.encode` story incomplete?
+### What is the Unicode profile?
 
-The codec machinery is only half there in the default Amiga build, because Unicode is off.
-
-**How CPython 2 normally does it**
-
-Calls such as `"abc".encode("ascii")` or `u"cafe".encode("utf-8")`, and much of XML / ElementTree I/O, go through:
-
-1. the pure-Python `encodings` package, which
-2. calls into the builtin **`_codecs`** module for the real work (`ascii_encode`, `utf_8_encode`, `latin_1_encode`, etc.).
-
-Those `_codecs.*_encode` / `*_decode` helpers are implemented with the Unicode C API (`PyUnicode_FromObject`, `PyUnicode_EncodeASCII`, etc.). In stock `_codecsmodule.c` they sit behind `#ifdef Py_USING_UNICODE`.
-
-**What this port does**
-
-Default builds have `#undef Py_USING_UNICODE`. At compile time those helpers are **not** entered into `_codecs`'s method table. You still get a `_codecs` module (registry / lookup stubs), but **not** the usual C encoders.
-
-So `"abc".encode("ascii")` fails when the encodings layer looks for `_codecs.ascii_encode` (AmigaTests skip with *"ascii_encode not in _codecs yet"*). **ElementTree** often hits the same wall even though **`pyexpat`** works for lower-level XML.
-
-**What still works**
-
-- Plain 8-bit `str` operations that never ask for an encoding
-- `_io` text paths shimmed for no-Unicode (identity / latin-1-ish; skip full codec lookup)
-- `pyexpat` when you stay on the Expat API and avoid ElementTree's encode path
-
-**"Until more `_codecs` encoders are wired"** means either turning Unicode on (expensive on classic Amiga), or adding 8-bit-only C stubs for common encodings (`ascii`, `latin-1`, maybe UTF-8 as bytes<->bytes) that do not need `PyUnicode_*`. Until then: registry present, real encode/decode C builtins largely absent.
-
-### Why doesn't AmigaPython support Unicode (by default)?
-
-Full CPython Unicode (`Py_USING_UNICODE`, wide builds, `unicodedata`, and the text stack that assumes them) is expensive in code size, RAM, and complexity on classic Amiga. This port often builds **without** `Py_USING_UNICODE` so the interpreter and `_io` stay usable; text is primarily **8-bit `str`** (Latin-1 / locale-ish), which matches how most classic Amiga software already treats strings.
-
-The Unicode enabled build option is currently untested, with no substrate that provides Unicode/UTF-8 support on Amiga (codesets.library could be a future option).
-
-MicroPython on Amiga and CPython 3 on OS4 take different Unicode choices because they target different runtimes and hardware budgets.
+ac3 enables CPython 2.7's UCS-2 Unicode runtime and the standard `encodings`
+registry. Python 2 semantics remain unchanged: `str` is still the normal byte
+type, while `unicode` is available when text conversion is required. Amiga
+filesystem paths default to Latin-1 so arbitrary classic filenames round-trip
+without assuming that the underlying filesystem is UTF-8. The standard build
+also includes the `unicodedata` C extension.
 
 ### What compiler is used to build AmigaPython?
 
-VBCC version 0.9h is used to build AmigaPython, together with the VBCC PosixLib. Earlier versions of AmigaPython used SAS/C but the more recent versions of CPython ported here use complex patterns of C, especially in the type objects implementations, that SAS/C could not compile successfully. By contrast, VBCC has been able to compile large parts of the CPython codebase unmodified, as well as having a richer, more POSIX compliant C library in the form of PosixLib. In this way, AmigaPython also serves as an excellent test for all the features of VBCC.
+The ac3-classic line uses VBCC version 0.9h together with PosixLib. The ac4
+AmigaChrome-native line has a hard build gate on GCC 16.2-open2 and does not
+claim backward compatibility with ac3. Earlier versions of AmigaPython used
+SAS/C, but newer CPython sources rely on C patterns that SAS/C could not compile
+successfully.
 
 VBCC allows for both hosted compilation on an Amiga, or cross compiler on another VBCC compatible environment, using the m68k-amigaos target.
 

@@ -217,11 +217,12 @@ class local(_localbase):
             lock.release()
 
     def __del__(self):
-        import threading
-
-        key = object.__getattribute__(self, '_local__key')
-
         try:
+            # During interpreter shutdown threading may already have been
+            # removed from sys.modules.  Import it inside the existing
+            # best-effort cleanup guard so dummy-thread users exit quietly.
+            import threading
+            key = object.__getattribute__(self, '_local__key')
             # We use the non-locking API since we might already hold the lock
             # (__del__ can be called at any point by the cyclic GC).
             threads = threading._enumerate()

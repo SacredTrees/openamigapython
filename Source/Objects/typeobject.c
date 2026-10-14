@@ -6011,6 +6011,13 @@ typedef struct wrapperbase slotdef;
 
 static slotdef slotdefs[] = {
     /* Type slots -- offsetof(PyTypeObject, ...) */
+    /* Legacy C slots still participate in duplicate-slot resolution. */
+    {"__str__", offsetof(PyTypeObject, tp_print), NULL, NULL, ""},
+    {"__repr__", offsetof(PyTypeObject, tp_print), NULL, NULL, ""},
+    {"__getattribute__", offsetof(PyTypeObject, tp_getattr), NULL, NULL, ""},
+    {"__getattr__", offsetof(PyTypeObject, tp_getattr), NULL, NULL, ""},
+    {"__setattr__", offsetof(PyTypeObject, tp_setattr), NULL, NULL, ""},
+    {"__delattr__", offsetof(PyTypeObject, tp_setattr), NULL, NULL, ""},
     {"__str__", offsetof(PyTypeObject, tp_str), (void *)slot_tp_str, wrap_unaryfunc,
      "x.__str__() <==> str(x)"},
     {"__repr__", offsetof(PyTypeObject, tp_repr), (void *)slot_tp_repr, wrap_unaryfunc,
@@ -6023,6 +6030,8 @@ static slotdef slotdefs[] = {
      "x.__call__(...) <==> x(...)", PyWrapperFlag_KEYWORDS},
     {"__getattribute__", offsetof(PyTypeObject, tp_getattro), (void *)slot_tp_getattr_hook, wrap_binaryfunc,
      "x.__getattribute__('name') <==> x.name"},
+    {"__getattr__", offsetof(PyTypeObject, tp_getattro), (void *)slot_tp_getattr_hook, NULL,
+     ""},
     {"__setattr__", offsetof(PyTypeObject, tp_setattro), (void *)slot_tp_setattro, wrap_setattr,
      "x.__setattr__('name', value) <==> x.name = value"},
     {"__delattr__", offsetof(PyTypeObject, tp_setattro), (void *)slot_tp_setattro, wrap_delattr,

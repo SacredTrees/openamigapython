@@ -14,7 +14,7 @@ except ImportError:
     zlib = None
     crc32 = binascii.crc32
 
-# Amiga default build has no unicode builtin (Py_USING_UNICODE off).
+# Keep the module importable in either Unicode-enabled or compact builds.
 try:
     _zip_unicode = unicode
 except NameError:
@@ -178,7 +178,11 @@ def is_zipfile(filename):
         if hasattr(filename, "read"):
             result = _check_zipfile(fp=filename)
         else:
-            with open(filename, "rb") as fp:
+            # PosixLib stdio's fseek/ftell accounting is not reliable for the
+            # backward/absolute seek pattern used by ZIP directories.  The
+            # builtin _io layer uses descriptor-level lseek and is reliable.
+            opener = io.open if sys.platform == 'amiga' else open
+            with opener(filename, "rb") as fp:
                 result = _check_zipfile(fp)
     except IOError:
         pass
@@ -189,7 +193,11 @@ def _EndRecData64(fpin, offset, endrec):
     Read the ZIP64 end-of-archive records and use that to update endrec
     """
     try:
-        fpin.seek(offset - sizeEndCentDir64Locator, 2)
+        if sys.platform == 'amiga':
+            filesize = os.fstat(fpin.fileno()).st_size
+            fpin.seek(filesize + offset - sizeEndCentDir64Locator, 0)
+        else:
+            fpin.seek(offset - sizeEndCentDir64Locator, 2)
     except IOError:
         # If the seek fails, the file is not large enough to contain a ZIP64
         # end-of-archive record, so just return the end record we were given.
@@ -206,7 +214,11 @@ def _EndRecData64(fpin, offset, endrec):
         raise BadZipfile("zipfiles that span multiple disks are not supported")
 
     # Assume no 'zip64 extensible data'
-    fpin.seek(offset - sizeEndCentDir64Locator - sizeEndCentDir64, 2)
+    if sys.platform == 'amiga':
+        fpin.seek(filesize + offset - sizeEndCentDir64Locator -
+                  sizeEndCentDir64, 0)
+    else:
+        fpin.seek(offset - sizeEndCentDir64Locator - sizeEndCentDir64, 2)
     data = fpin.read(sizeEndCentDir64)
     if len(data) != sizeEndCentDir64:
         return endrec
@@ -233,15 +245,26 @@ def _EndRecData(fpin):
     The data is a list of the nine items in the ZIP "End of central dir"
     record followed by a tenth item, the file seek offset of this record."""
 
-    # Determine file size
-    fpin.seek(0, 2)
-    filesize = fpin.tell()
+    # Determine file size.  PosixLib's SEEK_END reports position zero until
+    # the stream has been read; fstat is exact and does not disturb the ZIP
+    # stream's position.
+    if sys.platform == 'amiga':
+        filesize = os.fstat(fpin.fileno()).st_size
+    else:
+        fpin.seek(0, 2)
+        filesize = fpin.tell()
 
     # Check to see if this is ZIP file with no archive comment (the
     # "end of central directory" structure should be the last item in the
     # file if this is the case).
     try:
-        fpin.seek(-sizeEndCentDir, 2)
+        if sys.platform == 'amiga':
+            # PosixLib rejects a negative SEEK_END on a newly opened buffered
+            # stream.  The equivalent absolute seek is reliable and avoids
+            # priming the buffer (which would skew its later SEEK_SET).
+            fpin.seek(filesize - sizeEndCentDir, 0)
+        else:
+            fpin.seek(-sizeEndCentDir, 2)
     except IOError:
         return None
     data = fpin.read()
@@ -781,12 +804,13 @@ class ZipFile(object):
             self._filePassed = 0
             self.filename = file
             modeDict = {'r' : 'rb', 'w': 'wb', 'a' : 'r+b'}
+            opener = io.open if sys.platform == 'amiga' else open
             try:
-                self.fp = open(file, modeDict[mode])
+                self.fp = opener(file, modeDict[mode])
             except IOError:
                 if mode == 'a':
                     mode = key = 'w'
-                    self.fp = open(file, modeDict[mode])
+                    self.fp = opener(file, modeDict[mode])
                 else:
                     raise
         else:

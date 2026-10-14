@@ -573,10 +573,13 @@
 /* Define printf format for long long on AmigaOS */
 #define PY_FORMAT_LONG_LONG "ll"
 
-/* Disable Unicode support for VBCC compatibility */
-#undef Py_USING_UNICODE
+/* UCS-2 Unicode is required by the Python 2 packaging ecosystem.  Keep the
+ * storage type independent of the host wchar_t ABI on classic Amiga. */
+#define Py_USING_UNICODE 1
+#define Py_UNICODE_SIZE 2
+#define PY_UNICODE_TYPE unsigned short
 #undef HAVE_USABLE_WCHAR_T
 #undef HAVE_WCHAR_H
 #undef WANT_WCTYPE_FUNCTIONS
 
-#endif /* !Py_PYCONFIG_H */ 
+#endif /* !Py_PYCONFIG_H */

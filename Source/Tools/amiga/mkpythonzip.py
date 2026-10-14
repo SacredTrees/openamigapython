@@ -48,7 +48,6 @@ SKIP_DIRS = {
     "bsddb",
     "ctypes",
     "curses",
-    "distutils",
     "hotshot",
     "multiprocessing",
     "sqlite3",
@@ -144,14 +143,10 @@ def main(argv):
             # Amiga may need MakeDir ALL from the makefile first.
             pass
 
-    # Prefer deflate when zlib is present; writestr still avoids seek-back.
+    # Keep members stored.  This is deterministic across host/target zlib
+    # versions, is faster on 68k, and avoids a target zlib/zipimport edge case
+    # that can corrupt the leading byte of larger deflated Python modules.
     compression = zipfile.ZIP_STORED
-    if hasattr(zipfile, "ZIP_DEFLATED"):
-        try:
-            import zlib
-            compression = zipfile.ZIP_DEFLATED
-        except ImportError:
-            compression = zipfile.ZIP_STORED
 
     zf = zipfile.ZipFile(outzip, "w", compression)
     try:

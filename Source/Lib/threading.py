@@ -5,8 +5,11 @@ import sys as _sys
 try:
     import thread
 except ImportError:
-    del _sys.modules[__name__]
-    raise
+    # Classic OpenAmigaPython intentionally keeps the interpreter on CPU0.
+    # Libraries such as pyparsing only need process-local cache locks, so use
+    # CPython's synchronous compatibility implementation. Explicit parallel
+    # flat-buffer work belongs to OpenMulticore, not the object runtime.
+    import dummy_thread as thread
 
 import warnings
 
@@ -1181,7 +1184,10 @@ def enumerate():
     with _active_limbo_lock:
         return _active.values() + _limbo.values()
 
-from thread import stack_size
+try:
+    from thread import stack_size
+except ImportError:
+    from dummy_thread import stack_size
 
 # Create the main thread object,
 # and make it available for the interpreter
