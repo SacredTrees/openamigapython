@@ -26,8 +26,12 @@
 #define PY_RELEASE_LEVEL	PY_RELEASE_LEVEL_FINAL
 #define PY_RELEASE_SERIAL	0
 
-/* Version as a string */
-#define PY_VERSION      	"2.7.18"
+/* Version as a string.  Keep the CPython compatibility fields above at
+   2.7.18; AC_BUILD identifies the OpenAmigaPython distribution build. */
+#define AC_BUILD               1
+#define AC_BUILD_TAG           "ac1"
+#define PY_VERSION_BASE        "2.7.18"
+#define PY_VERSION             PY_VERSION_BASE "-" AC_BUILD_TAG
 /*--end constants--*/
 
 /* Subversion Revision number of this file (not of the repository). Empty

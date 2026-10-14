@@ -1,6 +1,6 @@
 # AmigaPython 2
 
-This is AmigaPython 2, a port of **Python 2.7.18** to Amiga - continuing Irmen de Jong's AmigaPython work on his original Aminet AmigaPython releases 1.4, 1.5 and 2.0.
+This is OpenAmigaPython **2.7.18-ac1**, a port of **Python 2.7.18** to Amiga - continuing Irmen de Jong's AmigaPython work on his original Aminet AmigaPython releases 1.4, 1.5 and 2.0. The `acN` suffix is the OpenAmigaPython build number; Python compatibility remains 2.7.18.
 
 ## [amigazen project](http://www.amigazen.com)
 

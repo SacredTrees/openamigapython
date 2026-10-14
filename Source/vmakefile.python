@@ -77,7 +77,7 @@ $(ODIR)/getplatform.o: $(SRCDIR)/getplatform.c
 	@$(MKDIR) $(ODIR)
 	$(CC) $(CONFIG) $(CFLAGS) '-DPLATFORM=\"amiga\"' -o $@ $<
 
-$(ODIR)/getversion.o: $(SRCDIR)/getversion.c
+$(ODIR)/getversion.o: $(SRCDIR)/getversion.c Include/patchlevel.h
 	@$(MKDIR) $(ODIR)
 	$(CC) $(CONFIG) $(CFLAGS) -o $@ $<
 

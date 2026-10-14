@@ -123,7 +123,7 @@ $(ODIR)/Modules/python.o: Modules/python.c
 	@$(MKDIR) $(ODIR)/Modules
 	$(CC) $(CONFIG) $(CFLAGS) -o $@ $<
 
-$(ODIR)/Modules/main.o: Modules/main.c
+$(ODIR)/Modules/main.o: Modules/main.c Include/patchlevel.h
 	@$(MKDIR) $(ODIR)/Modules
 	$(CC) $(CONFIG) $(CFLAGS) -o $@ $<
 

@@ -9,6 +9,7 @@ const char *
 Py_GetVersion(void)
 {
 	static char version[250];
+	/* PY_VERSION includes the OpenAmigaPython acN distribution suffix. */
 	PyOS_snprintf(version, sizeof(version), "%.80s (%.80s) %.80s",
 		      PY_VERSION, Py_GetBuildInfo(), Py_GetCompiler());
 	return version;
