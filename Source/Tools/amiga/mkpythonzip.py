@@ -13,20 +13,27 @@
 # patch local headers, and that seek fails on some Amiga/PosixLib handles
 # (IOError with errno 0).
 
+from __future__ import print_function
+
 import os
 import sys
 
 # Prefer flat Lib/ over any python27.zip already on sys.path (old archives
 # may still ship a unicode-dependent zipfile.py).
-if os.path.isdir("Lib"):
+if sys.version_info[0] == 2 and os.path.isdir("Lib"):
     sys.path.insert(0, os.path.abspath("Lib"))
-else:
+elif sys.version_info[0] == 2:
     _here = os.path.dirname(os.path.abspath(sys.argv[0]))
     _lib = os.path.join(os.path.dirname(os.path.dirname(_here)), "Lib")
     if os.path.isdir(_lib):
         sys.path.insert(0, _lib)
 
 import zipfile
+
+# Use the earliest timestamp accepted by the ZIP format.  Amiga builds often
+# run without a reliable real-time clock, and source mtimes must not make two
+# otherwise identical releases differ.
+ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 # Directories under Lib/ that are not shipped in the Amiga stdlib zip.
 SKIP_DIRS = {
@@ -63,24 +70,28 @@ def _skip_file(name):
     return 0
 
 
-def _add_file(zf, abspath, arcname):
+def _add_file(zf, abspath, arcname, compression):
     """Read file and writestr - no seek-back required."""
     f = open(abspath, "rb")
     try:
         data = f.read()
     finally:
         f.close()
-    zf.writestr(arcname, data)
+    info = zipfile.ZipInfo(arcname, ZIP_TIMESTAMP)
+    info.compress_type = compression
+    # Regular file, mode 0644.  This keeps host umasks out of the archive.
+    info.external_attr = (0o100644 << 16)
+    zf.writestr(info, data)
 
 
-def _add_tree(zf, root, rel_prefix):
+def _add_tree(zf, root, rel_prefix, compression):
     """Add files under root into zf; rel_prefix is archive path prefix or ''."""
     stack = [""]
     while stack:
         rel = stack.pop()
         absdir = root if rel == "" else os.path.join(root, rel)
         try:
-            names = os.listdir(absdir)
+            names = sorted(os.listdir(absdir), reverse=True)
         except OSError:
             continue
         for name in names:
@@ -98,19 +109,19 @@ def _add_tree(zf, root, rel_prefix):
                 arcname = arcname.replace(os.sep, "/")
             if rel_prefix:
                 arcname = rel_prefix + "/" + arcname
-            _add_file(zf, abspath, arcname)
+            _add_file(zf, abspath, arcname, compression)
 
 
-def _add_site_python(zf, site_dir):
+def _add_site_python(zf, site_dir, compression):
     """Flatten Lib/site-python/*.py into the zip root (overrides / extras)."""
     if not os.path.isdir(site_dir):
         return
-    for name in os.listdir(site_dir):
+    for name in sorted(os.listdir(site_dir)):
         if _skip_file(name) or not name.endswith(".py"):
             continue
         abspath = os.path.join(site_dir, name)
         if os.path.isfile(abspath):
-            _add_file(zf, abspath, name)
+            _add_file(zf, abspath, name, compression)
 
 
 def main(argv):
@@ -144,12 +155,12 @@ def main(argv):
 
     zf = zipfile.ZipFile(outzip, "w", compression)
     try:
-        _add_tree(zf, libdir, "")
-        _add_site_python(zf, os.path.join(libdir, "site-python"))
+        _add_tree(zf, libdir, "", compression)
+        _add_site_python(zf, os.path.join(libdir, "site-python"), compression)
     finally:
         zf.close()
 
-    print "Wrote %s (%d bytes)" % (outzip, os.path.getsize(outzip))
+    print("Wrote %s (%d bytes)" % (outzip, os.path.getsize(outzip)))
     return 0
 
 

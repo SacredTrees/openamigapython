@@ -17,6 +17,13 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 
 ### Added
 
+- OpenAmigaPython `ac2` distribution identity while retaining CPython ABI/version compatibility at 2.7.18
+- Reproducible stdlib ZIP ordering and timestamps, plus a host-side release builder that emits a file manifest and `SHA256SUMS`
+- Self-contained, versioned OpenUp Part generation with managed `Python:` and command-path startup entries
+- `amigachrome.info` capability discovery for OpenMulticore, OpenService, OpenCrypto, OpenTLS, bsdsocket and ACControl
+- `amigachrome.acceleration` flat-buffer offload policy with thresholding and mandatory CPU0 fallback
+- Host regression coverage for release metadata, OpenUp payloads, capability probing and acceleration success/failure paths
+
 - `Docs/PLUGIN_GUIDE.md` — LoadSeg native C module / PyHost plugin system (ABI, build, hard rules, carve-out checklist); reference `_socket.module`
 - Compile-time **SlimPython** vs **standard** interpreter (`make -f vmakefile BUILD=slim|standard`; `compact`/`core`/`full` remain aliases): SlimPython keeps Amiga OS modules and stdlib boot; standard adds pyexpat/Expat, datetime, hashing, csv/bisect/heapq, cmath, pwd/grp/crypt/syslog
 - PyHost ABI v2 + FastForward-style LoadSeg module head (security word + ID) for real `.module` plugins

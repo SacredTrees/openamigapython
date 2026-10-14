@@ -167,6 +167,35 @@ into `Python27` — PosixLib treats `/` as volume root, not parent.
 
 `python27.zip` is the zipimported stdlib (excludes `test/`, `plat-*`, idle/tk, and other non-Amiga packages). LoadSeg plugins stay outside the zip under `lib/lib-dynload/`.
 
+### Reproducible release and OpenUp Part
+
+After building `Source/Python27` and `Source/lib/python27.zip`, assemble the
+versioned release and its OpenUp input with:
+
+```sh
+python3 Tools/release/build_release.py
+```
+
+The tool reads `AC_BUILD` from `Source/Include/patchlevel.h`; it does not accept
+an unrelated version on the command line. It produces:
+
+- `dist/staging/OpenAmigaPython-<version>/` — standalone drawer with
+  `openamigapython-release.json` and `SHA256SUMS`;
+- `dist/staging/OpenUp/Parts/OpenAmigaPython/` — self-contained OpenUp Part
+  and payload.
+
+The OpenUp install is versioned below
+`SYS:Tools/OpenAmigaPython/<version>/`. OpenUp owns both startup entries:
+`Assign Python:` selects that version and `Path Python: ADD` provides the
+normal command-line experience. Updating or removing the Part therefore does
+not require an OpenAmigaPython-specific installer.
+
+Host-side validation is intentionally independent of the cross toolchain:
+
+```sh
+python3 -m unittest discover -s Tools/tests -v
+```
+
 ### Standalone release drawer (`Python/`)
 
 `Python/` is the copy-anywhere end-user product (no installer script):

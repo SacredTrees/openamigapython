@@ -1,6 +1,6 @@
 # AmigaPython 2
 
-This is OpenAmigaPython **2.7.18-ac1**, a port of **Python 2.7.18** to Amiga - continuing Irmen de Jong's AmigaPython work on his original Aminet AmigaPython releases 1.4, 1.5 and 2.0. The `acN` suffix is the OpenAmigaPython build number; Python compatibility remains 2.7.18.
+This is OpenAmigaPython **2.7.18-ac2**, a port of **Python 2.7.18** to Amiga - continuing Irmen de Jong's AmigaPython work on his original Aminet AmigaPython releases 1.4, 1.5 and 2.0. The `acN` suffix is the OpenAmigaPython build number; Python compatibility remains 2.7.18.
 
 ## [amigazen project](http://www.amigazen.com)
 
@@ -85,6 +85,25 @@ Relative to the classic AmigaPython **2.0** baseline, upstream Python 2 gained r
 | site-python | OS4-style shims: `arexx`, `asl`, `catalog`, `icon`, `amigavars`, etc.|
 | ARexx | `arexx` / `_arexx` high-level support retained and updated |
 | Tests | AmigaTests coverage for Amiga extras and related builtins |
+| AmigaChrome | `python -m amigachrome.info` capability report and CPU0-safe acceleration policy |
+| OpenUp | Reproducible, versioned Part generation with release manifest and SHA-256 checksums |
+
+### AmigaChrome integration
+
+OpenAmigaPython treats AmigaChrome services as optional capabilities. Run
+`Python -m amigachrome.info` to see OpenMulticore, OpenService, OpenCrypto,
+OpenTLS, bsdsocket and ACControl availability without opening them at startup.
+
+`amigachrome.acceleration` is the common policy boundary for accelerated work.
+Only named flat byte-buffer kernels of sufficient size may leave CPU0. Python
+objects, allocation, reference counts, exceptions and interpreter state stay on
+CPU0, and every missing or failed native backend falls back to the supplied CPU
+implementation. This makes acceleration additive rather than a new runtime
+requirement.
+
+The release builder under `Tools/release/` creates a file-level JSON manifest,
+`SHA256SUMS`, and a versioned `OpenAmigaPython` OpenUp Part. See `BUILD.md` for
+the exact command and output layout.
 
 ### Standalone release drawer
 

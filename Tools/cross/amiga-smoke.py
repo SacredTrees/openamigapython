@@ -12,6 +12,7 @@ import amiga
 import arexx
 
 assert sys.version_info[:3] == (2, 7, 18)
+assert sys.version.split()[0].startswith("2.7.18-ac")
 assert sys.platform == "amiga"
 assert math.sqrt(81) == 9
 assert zlib.decompress(zlib.compress("amigapython")) == "amigapython"
