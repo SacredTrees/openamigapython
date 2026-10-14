@@ -172,3 +172,18 @@ amigapythonamitcp.lib
 
 *.pyc
 *.uaem
+
+# Cross-build dependencies, aliases and outputs
+/PosixLib/
+/Source/build-vbcc/
+/Source/Python27
+/Source/Python27_Debug
+/Source/SlimPython
+/Source/SlimPython_Debug
+/Source/vbcc:PosixLib
+/Source/vincludeos3:
+/Source/include:
+/Source/netinclude:
+/build-support/
+/dist/
+/vbcc_PosixLib.lha

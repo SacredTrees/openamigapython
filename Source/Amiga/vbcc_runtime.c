@@ -8,7 +8,7 @@
 #include <exec/memory.h>
 #include <dos/dos.h>
 #include <stddef.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <limits.h>
@@ -199,7 +199,7 @@ long _lmods(long a, long b)
 unsigned long _lmodu(unsigned long a, unsigned long b)
 {
     return a % b;
-} 
+}
 
 /* Commented out - zlib provides its own implementations
 void *zcalloc(void *opaque, unsigned items, unsigned size) {
@@ -521,4 +521,4 @@ long sysconf(int name)
             errno = EINVAL;
             return -1;
     }
-} 
+}

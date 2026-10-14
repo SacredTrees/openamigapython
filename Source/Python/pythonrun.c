@@ -888,6 +888,13 @@ maybe_pyc_file(FILE *fp, const char* filename, const char* ext, int closeit)
     if (strcmp(ext, ".pyc") == 0 || strcmp(ext, ".pyo") == 0)
         return 1;
 
+#ifdef _AMIGA
+    /* PosixLib's seek/tell bridge is not reliable on inherited AmigaDOS
+     * handles.  Extensions are authoritative here, so do not sniff .py.
+     */
+    return 0;
+#endif
+
     /* Only look into the file if we are allowed to close it, since
        it then should also be seekable. */
     if (closeit) {
@@ -1835,9 +1842,10 @@ Py_FdIsInteractive(FILE *fp, const char *filename)
      */
     if (fp == stdin && Py_Amiga_StdinInteractive())
         return 1;
-#endif
+#else
     if (isatty((int)fileno(fp)))
         return 1;
+#endif
     if (!Py_InteractiveFlag)
         return 0;
     return (filename == NULL) ||

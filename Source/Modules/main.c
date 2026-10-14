@@ -602,9 +602,11 @@ Py_Main(int argc, char **argv)
 
         sts = -1;               /* keep track of whether we've already run __main__ */
 
+#ifndef _AMIGA
         if (filename != NULL) {
             sts = RunMainFromImporter(filename);
         }
+#endif
 
         if (sts==-1 && filename!=NULL) {
             if ((fp = fopen(filename, "r")) == NULL) {
@@ -624,6 +626,7 @@ Py_Main(int argc, char **argv)
                     }
                 }
             }
+#ifndef _AMIGA
             {
                 /* XXX: does this work on Win/Win64? (see posix_fstat) */
                 struct stat sb;
@@ -634,6 +637,7 @@ Py_Main(int argc, char **argv)
                     return 1;
                 }
             }
+#endif
         }
 
         if (sts==-1) {

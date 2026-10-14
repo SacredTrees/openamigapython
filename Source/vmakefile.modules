@@ -148,9 +148,10 @@ $(ODIR)/selectmodule.o: $(SRCDIR)/selectmodule.c
 	$(CC) $(CONFIG) $(CFLAGS) -o $@ $<
 
 # Build zlib library
+ZLIB_ODIR ?= //build-vbcc/Modules/zlib
 zlib:
 	@echo "Building zlib library..."
-	$(MAKE) -C $(SRCDIR)/zlib -f vmakefile
+	$(MAKE) -C $(SRCDIR)/zlib -f vmakefile ODIR=$(ZLIB_ODIR)
 	@echo "zlib library built"
 
 # Link all objects into a static library for modules
@@ -161,7 +162,7 @@ zlib:
 
 $(ODIR)/zlibmodule.o: $(SRCDIR)/zlibmodule.c
 	@$(MKDIR) $(ODIR)
-	$(CC) $(CONFIG) $(CFLAGS) -I$(SRCDIR)/zlib -o $@ $<
+	$(CC) $(CONFIG) -c -g -O0 -D_AMIGA -DHAVE_CONFIG_H -DHAVE_POSIXLIB -D__USE_NEW_TIMEVAL__ -D__NO_NETINCLUDE_TIMEVAL -Ivbcc:PosixLib/include -IInclude -IAmiga -Ivincludeos3: -Iinclude: -I$(SRCDIR) -Inetinclude: -I$(SRCDIR)/zlib -cpu=68020 -fpu=soft -maxoptpasses=1 -o $@ $<
 
 $(ODIR)/zipimport.o: $(SRCDIR)/zipimport.c
 	@$(MKDIR) $(ODIR)
@@ -376,4 +377,4 @@ clean:
 
 FORCE:
 
-.PHONY: clean zlib FORCE 
+.PHONY: clean zlib FORCE

@@ -32,6 +32,15 @@ main(int argc, char **argv)
 	 */
 	locale_lib_init_constructor();
 	dosio_init_constructor();
+	/* PosixLib initializes parts of its FILE/fd bridge lazily.  Prime it
+	 * before CPython wraps the inherited AmigaDOS standard streams; on a
+	 * cold boot PyFile_FromFile(stdin, ...) can otherwise block forever.
+	 */
+	{
+		FILE *warmup = fopen("NIL:", "w");
+		if (warmup != NULL)
+			fclose(warmup);
+	}
 	if (amiga_wb_prepare(&argc, &argv) != 0) {
 		amiga_wb_cleanup();
 		return 20;

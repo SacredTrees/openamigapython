@@ -43,7 +43,7 @@ $(ODIR)/bltinmodule.o: $(SRCDIR)/bltinmodule.c
 
 $(ODIR)/ceval.o: $(SRCDIR)/ceval.c
 	@$(MKDIR) $(ODIR)
-	$(CC) $(CONFIG) -c -g -O0 -D_AMIGA -DHAVE_CONFIG_H -DHAVE_POSIXLIB -IInclude -cpu=68020 -fpu=soft -maxoptpasses=1 -dontkeep-initialized-data -o $@ $<
+	$(CC) $(CONFIG) -c -g -O0 -D_AMIGA -DHAVE_CONFIG_H -DHAVE_POSIXLIB -Ivbcc:PosixLib/include -IInclude -Ivincludeos3: -Iinclude: -cpu=68020 -fpu=soft -maxoptpasses=1 -dontkeep-initialized-data -o $@ $<
 
 $(ODIR)/compile.o: $(SRCDIR)/compile.c
 	@$(MKDIR) $(ODIR)
@@ -75,7 +75,7 @@ $(ODIR)/getcopyright.o: $(SRCDIR)/getcopyright.c
 
 $(ODIR)/getplatform.o: $(SRCDIR)/getplatform.c
 	@$(MKDIR) $(ODIR)
-	$(CC) $(CONFIG) $(CFLAGS) -DPLATFORM="amiga" -o $@ $<
+	$(CC) $(CONFIG) $(CFLAGS) '-DPLATFORM=\"amiga\"' -o $@ $<
 
 $(ODIR)/getversion.o: $(SRCDIR)/getversion.c
 	@$(MKDIR) $(ODIR)
@@ -210,4 +210,4 @@ clean:
 
 FORCE:
 
-.PHONY: clean FORCE 
+.PHONY: clean FORCE

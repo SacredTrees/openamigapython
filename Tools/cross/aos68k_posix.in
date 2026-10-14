@@ -1,0 +1,14 @@
+-cc=@TOOLCHAIN@/bin/vbccm68k -hunkdebug %s -o= %s %s -O=%ld -quiet -I@TOOLCHAIN@/m68k-amigaos/vbcc/include -I@TOOLCHAIN@/m68k-amigaos/ndk-include -I@TOOLCHAIN@/m68k-amigaos/include
+-ccv=@TOOLCHAIN@/bin/vbccm68k -hunkdebug %s -o= %s %s -O=%ld -I@TOOLCHAIN@/m68k-amigaos/vbcc/include -I@TOOLCHAIN@/m68k-amigaos/ndk-include -I@TOOLCHAIN@/m68k-amigaos/include
+-as=@TOOLCHAIN@/bin/vasmm68k_mot -Fhunk -phxass -opt-fconst -nowarn=62 -quiet -I@TOOLCHAIN@/m68k-amigaos/ndk-include %s -o %s
+-asv=@TOOLCHAIN@/bin/vasmm68k_mot -Fhunk -phxass -opt-fconst -nowarn=62 -I@TOOLCHAIN@/m68k-amigaos/ndk-include %s -o %s
+-rm=rm %s
+-rmv=rm -v %s
+-ld=@TOOLCHAIN@/bin/vlink -bamigahunk -x -Bstatic -Cvbcc -nostdlib @TOOLCHAIN@/m68k-amigaos/vbcc/lib/startup.o %s %s -L@POSIX_LIB@ -L@TOOLCHAIN@/m68k-amigaos/vbcc/lib -lposix -lvc -lamiga -o %s
+-l2=@TOOLCHAIN@/bin/vlink -bamigahunk -x -Bstatic -Cvbcc -nostdlib %s %s -L@POSIX_LIB@ -L@TOOLCHAIN@/m68k-amigaos/vbcc/lib -o %s
+-ldv=@TOOLCHAIN@/bin/vlink -bamigahunk -t -x -Bstatic -Cvbcc -nostdlib @TOOLCHAIN@/m68k-amigaos/vbcc/lib/startup.o %s %s -L@POSIX_LIB@ -L@TOOLCHAIN@/m68k-amigaos/vbcc/lib -lposix -lvc -lamiga -o %s
+-l2v=@TOOLCHAIN@/bin/vlink -bamigahunk -t -x -Bstatic -Cvbcc -nostdlib %s %s -L@POSIX_LIB@ -L@TOOLCHAIN@/m68k-amigaos/vbcc/lib -o %s
+-ldnodb=-s -Rshort
+-ul=-l%s
+-cf=-F%s
+-ml=500

@@ -6,7 +6,10 @@ CC=vc
 VLINK=vlink
 MKDIR=MakeDir ALL
 CONFIG=+aos68k_posix
-CFLAGS=-c -g -O2 -D_AMIGA -DHAVE_CONFIG_H -I. -stack-check
+POSIX_INCLUDE ?= vbcc:PosixLib/include
+VBCC_INCLUDE ?= vincludeos3:
+NDK_INCLUDE ?= include:
+CFLAGS=-c -g -O2 -D_AMIGA -DHAVE_CONFIG_H -I. -I$(POSIX_INCLUDE) -I$(VBCC_INCLUDE) -I$(NDK_INCLUDE) -stack-check
 
 # Source directory
 SRCDIR=.
@@ -43,4 +46,4 @@ clean:
 	delete $(ODIR)/*.o
 	delete $(ODIR)/libz.a
 
-.PHONY: clean all 
+.PHONY: clean all

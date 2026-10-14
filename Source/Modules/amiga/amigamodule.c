@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #define NAMLEN(dirent) strlen((dirent)->d_name)

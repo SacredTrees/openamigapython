@@ -1375,7 +1375,7 @@ _PySys_Init(void)
     crashing the Python interpreter. Catch this common mistake here
     and output a useful error message. Note that under MS Windows,
     the shell already prevents that. */
-#if !defined(MS_WINDOWS)
+#if !defined(MS_WINDOWS) && !defined(_AMIGA)
     {
         struct stat sb;
         if (fstat(fileno(stdin), &sb) == 0 &&
@@ -1618,7 +1618,7 @@ makeargvobject(int argc, char **argv)
 void
 PySys_SetArgvEx(int argc, char **argv, int updatepath)
 {
-#if defined(HAVE_REALPATH)
+#if defined(HAVE_REALPATH) && !defined(_AMIGA)
     char fullpath[MAXPATHLEN];
 #elif defined(MS_WINDOWS) && !defined(MS_WINCE)
     char fullpath[MAX_PATH];
@@ -1634,7 +1634,7 @@ PySys_SetArgvEx(int argc, char **argv, int updatepath)
         char *p = NULL;
         Py_ssize_t n = 0;
         PyObject *a;
-#ifdef HAVE_READLINK
+#if defined(HAVE_READLINK) && !defined(_AMIGA)
         char link[MAXPATHLEN+1];
         char argv0copy[2*MAXPATHLEN+1];
         int nr = 0;
@@ -1661,7 +1661,7 @@ PySys_SetArgvEx(int argc, char **argv, int updatepath)
                 }
             }
         }
-#endif /* HAVE_READLINK */
+#endif /* HAVE_READLINK && !_AMIGA */
 #if SEP == '\\' /* Special case for MS filename syntax */
         if (argc > 0 && argv0 != NULL && strcmp(argv0, "-c") != 0) {
             char *q;
@@ -1690,7 +1690,7 @@ PySys_SetArgvEx(int argc, char **argv, int updatepath)
         }
 #else /* All other filename syntaxes */
         if (argc > 0 && argv0 != NULL && strcmp(argv0, "-c") != 0) {
-#if defined(HAVE_REALPATH)
+#if defined(HAVE_REALPATH) && !defined(_AMIGA)
             if (realpath(argv0, fullpath)) {
                 argv0 = fullpath;
             }
