@@ -1,4 +1,4 @@
-/* Amiga Python LoadSeg plugin ABI v8.
+/* Amiga Python LoadSeg plugin ABI v9.
  * Plugins carry extension .o code and call Python/Posix only via PyHost.
  * Socket trampolines are a posix fd table over AmiTCP LVOs (unix.lib2
  * psockets). sock_fd is never 0/1/2. AmiTLS uses fn_socket_native_fd()
@@ -12,6 +12,11 @@
  * ABI v8 adds fn_socket_set_nbio (AmiTCP IoctlSocket/FIONBIO via host
  * A4; never jsr IoctlSocket with A6 as the VBCC frame pointer) and
  * fn_object_gc_untrack.
+ * ABI v9 adds fn_PyUnicode_AsEncodedString: the interpreter has Unicode
+ * (Py_USING_UNICODE) since 2.7.18-ac3, and _socket's getaddrinfo encodes
+ * a unicode host name with the idna codec. From v9 the host's trampolines
+ * keep the caller's A4 (a callee-saved register VBCC uses for locals)
+ * instead of loading a saved host A4.
  *
  * Author guide: Docs/PLUGIN_GUIDE.md
  */
@@ -49,7 +54,7 @@
 #define PYAMIGA_MODULE_ID        0x5079416dUL  /* 'PyAm' */
 #define PYAMIGA_MODULE_MAGIC     PYAMIGA_MODULE_ID  /* alias for scanners */
 #define PYAMIGA_HOST_MAGIC       0x50794873UL  /* 'PyHs' */
-#define PYAMIGA_ABI_VERSION      8
+#define PYAMIGA_ABI_VERSION      9
 
 struct PyHost;
 
@@ -287,6 +292,14 @@ struct PyHost {
     int (*fn_socket_set_nbio)(int posix_fd, int nonblock);
     /* Untrack a host-heap GC object; safe to call twice. Does not free. */
     void (*fn_object_gc_untrack)(PyObject *op);
+
+    /*
+     * ABI v9: PyUnicode_AsEncodedString on the host (getaddrinfo with a
+     * unicode host name: u"example.com".encode("idna")).
+     */
+    PyObject *(*fn_PyUnicode_AsEncodedString)(PyObject *u,
+                                              const char *encoding,
+                                              const char *errors);
 };
 
 #ifdef PYAMIGA_HOST_BUILD

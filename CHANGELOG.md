@@ -32,6 +32,7 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 - Real `_ssl.module` implementing the CPython 2.7 `_ssl` API for `ssl.py`; default backend is `amitls.library` (`-DPYAMIGA_USE_AMITLS`, headers via `amitlsinclude:`); AmiSSL 5 remains an `#ifndef PYAMIGA_USE_AMITLS` branch; TLS I/O uses the AmiTCP native fd from host PosixLib `__fdesc`
 - PyHost ABI v6: `ptr_SocketBase`, `fn_socket_native_fd`, PyCapsule/dict/bool/write-buffer trampolines
 - PyHost ABI v8: `fn_socket_set_nbio` (host AmiTCP `IoctlSocket`/`FIONBIO`), `fn_object_gc_untrack`
+- PyHost ABI v9: `fn_PyUnicode_AsEncodedString`, so `_socket.module` links again with Unicode on (`getaddrinfo` with a unicode host name), and the plugin libc's own `memcmp` for the OpenTLS `_ssl.module`; the host trampolines keep the caller's A4 instead of loading a saved one, which had clobbered plugin locals (OpenTLS `read()` raised `MemoryError`, `getaddrinfo` failed with errno 4); `Tools/cross/build-linux-vbcc.sh plugins` builds both plugins on Linux
 - AmigaTests groups `ssl` / `ssl_net` (AmiTLS + optional live HTTPS GET)
 - AmigaTests coverage for `_io` / text I/O and expanded legacy Amiga cases (where present in the working tree)
 

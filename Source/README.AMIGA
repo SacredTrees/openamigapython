@@ -89,7 +89,7 @@ opens bsdsocket via PosixLib on first import. `_ssl` opens
 opentls.library (the default build, `-Iopentlsinclude:`), amitls.library
 (`-Iamitlsinclude:`) or AmiSSL 5 (`amisslmaster.library`,
 `-Isslinclude:`) the same way; Assign the include directory rather than
-hardcoding an SDK tree. BUILD.md lists the switches. Rebuild **python27 and every `.module`** together (ABI v6).
+hardcoding an SDK tree. BUILD.md lists the switches. Rebuild **python27 and every `.module`** together (plugin ABI v9, Include/pyamiga_plugin.h).
 
 
 Native C LoadSeg plugins

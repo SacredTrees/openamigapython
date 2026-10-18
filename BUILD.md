@@ -72,6 +72,20 @@ Delete Modules/plugin/sslmodule_plugin.o lib/lib-dynload/_ssl.module
 smake -f Modules/plugin/vmakefile
 ```
 
+On Linux, the VBCC cross build makes both plugins after the interpreter
+(the OpenTLS headers default to an `openamigatls` checkout beside this one;
+`AMIGAPYTHON_OPENTLS_INCLUDE` names another `include/`):
+
+```sh
+Tools/cross/build-linux-vbcc.sh standard
+Tools/cross/build-linux-vbcc.sh plugins
+```
+
+The interpreter and the plugins share the plugin ABI
+(`PYAMIGA_ABI_VERSION` in `Source/Include/pyamiga_plugin.h`, 9): rebuild
+both together, and copy the new `.module` files into `Python/lib/lib-dynload/`,
+which is what `Tools/release/build_release.py` ships.
+
 `Modules/plugin/vmakefile` selects the `_ssl` backend via `SSL_CFLAGS`:
 
 | `SSL_CFLAGS` | Library | `_ssl.amiga_plugin_rev` |

@@ -120,6 +120,15 @@ PyCapsule_Import(const char *name, int no_block)
 }
 
 
+/* ABI v9; the name is PyUnicodeUCS2_AsEncodedString after unicodeobject.h. */
+PyObject *
+PyUnicode_AsEncodedString(PyObject *u, const char *encoding,
+                          const char *errors)
+{
+    return PyAmiga_Host->fn_PyUnicode_AsEncodedString(u, encoding, errors);
+}
+
+
 void
 PyAmiga_InstallHost(struct PyHost *host)
 {

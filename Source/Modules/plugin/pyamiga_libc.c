@@ -17,6 +17,7 @@
 #undef memcpy
 #undef memset
 #undef memmove
+#undef memcmp
 #undef strlen
 #undef strcpy
 #undef strncpy
@@ -54,6 +55,20 @@ void *
 memmove(void *dst, const void *src, size_t n)
 {
     return PyAmiga_Host->fn_memmove(dst, src, n);
+}
+
+/* Here, not on the host: no PyHost slot needed (as isspace below). */
+int
+memcmp(const void *a, const void *b, size_t n)
+{
+    const unsigned char *p = (const unsigned char *)a;
+    const unsigned char *q = (const unsigned char *)b;
+
+    for (; n != 0; n--, p++, q++) {
+        if (*p != *q)
+            return (int)*p - (int)*q;
+    }
+    return 0;
 }
 
 size_t
