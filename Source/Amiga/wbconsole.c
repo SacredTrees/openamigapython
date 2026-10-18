@@ -45,6 +45,7 @@
 #define FDFL_STDIO       (1<<0)
 #define FDFL_INTERACTIVE (1<<1)
 #endif
+#ifndef OPENAMIGA_GCC_OPEN2
 struct __fd_s {
     long file;
     int nestcnt;
@@ -53,6 +54,7 @@ struct __fd_s {
     unsigned long amode;
 };
 extern struct __fd_s *__fdesc[MAX_FDESC];
+#endif
 
 /* Amiga/dosio_init.c — keep in sync after SelectInput/Output. */
 extern BPTR __dosio_files[3];
@@ -263,12 +265,22 @@ patch_stdio_file(FILE *f, BPTR fh)
 {
     if (f == NULL || fh == ZERO)
         return;
+#ifdef __VBCC__
     f->filehandle = (char *)fh;
+#else
+    /* libnix FILE keeps descriptor 0/1/2; __fdesc carries the BPTR. */
+    (void)f;
+    (void)fh;
+#endif
 }
 
 static void
 retarget_posix_stdio(BPTR fh)
 {
+#ifdef OPENAMIGA_GCC_OPEN2
+    /* libnix descriptors follow the process handles selected below. */
+    (void)fh;
+#else
     struct __fd_s *fp;
 
     if (fh == ZERO)
@@ -302,6 +314,7 @@ retarget_posix_stdio(BPTR fh)
     __dosio_files[0] = fh;
     __dosio_files[1] = fh;
     __dosio_files[2] = fh;
+#endif
 }
 
 static int
@@ -491,7 +504,9 @@ amiga_wb_prepare(int *argc, char ***argv)
 void
 amiga_wb_cleanup(void)
 {
+#ifndef OPENAMIGA_GCC_OPEN2
     struct __fd_s *fp;
+#endif
     struct Process *pr;
     static int cleaned;
 
@@ -532,6 +547,7 @@ amiga_wb_cleanup(void)
         SelectOutput(ZERO);
 
     /* Drop Amiga BPTRs from PosixLib so EXIT fclose/close cannot Close. */
+#ifndef OPENAMIGA_GCC_OPEN2
     fp = __fdesc[0];
     if (fp != NULL && (BPTR)fp->file == wb_con_fh)
         fp->file = (long)ZERO;
@@ -541,6 +557,7 @@ amiga_wb_cleanup(void)
     fp = __fdesc[2];
     if (fp != NULL && (BPTR)fp->file == wb_con_fh)
         fp->file = (long)ZERO;
+#endif
 
     patch_stdio_file(stdin, ZERO);
     patch_stdio_file(stdout, ZERO);

@@ -165,6 +165,11 @@ corresponding Unix manual entries for more information on calls.");
 #endif  /* _MSC_VER */
 #endif  /* __BORLANDC__ */
 #endif  /* ! __WATCOMC__ || __QNX__ */
+
+#if defined(_AMIGA) && defined(OPENAMIGA_GCC_OPEN2)
+/* libnix does not provide ttyname(); do not advertise a dead entry point. */
+#undef HAVE_TTYNAME
+#endif
 #endif /* ! __IBMC__ */
 
 #ifndef _MSC_VER
@@ -479,7 +484,8 @@ OverflowUp:
 #endif /* MS_WINDOWS */
 
 
-#if defined(HAVE_MKNOD) && defined(HAVE_MAKEDEV)
+#if defined(HAVE_DEVICE_MACROS) || \
+    (defined(HAVE_MKNOD) && defined(HAVE_MAKEDEV))
 static int
 _Py_Dev_Converter(PyObject *obj, void *p)
 {

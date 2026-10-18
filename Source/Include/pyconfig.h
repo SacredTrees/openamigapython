@@ -516,7 +516,7 @@
 
 /* PY_FORMAT_SIZE_T is a platform-specific modifier for use in a printf
    format string for size_t values.  It is defined by configure. */
-#define PY_FORMAT_SIZE_T "lu"
+#define PY_FORMAT_SIZE_T "l"
 
 /* Define if you have <dirent.h> */
 #define HAVE_DIRENT_H 1

@@ -1,0 +1,15 @@
+# OpenAmigaPython ac4 bootstrap builtins.
+#
+# Keep Unix account/group emulation out of the AmigaChrome-native core.  The
+# libsocket implementations pull in __inituser, which probes AmiTCP-style
+# account databases before main() and can block indefinitely on modern
+# AmigaOS systems.  Native Amiga OS bindings are added in the next layer.
+
+posix posixmodule.c
+errno errnomodule.c
+_sre _sre.c
+_codecs _codecsmodule.c
+_weakref _weakref.c
+zipimport zipimport.c
+_symtable symtablemodule.c
+xxsubtype xxsubtype.c

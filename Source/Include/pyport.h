@@ -64,8 +64,9 @@ Used in:  PY_LONG_LONG
  * integral synonyms.  Only define the ones we actually need.
  */
 
-/* Custom long long implementation for AmigaOS using two longs */
-#ifdef _AMIGA
+/* Custom long long implementation for the classic VBCC build.  GCC open2
+ * has a conforming native long long and must use the normal CPython path. */
+#if defined(_AMIGA) && !defined(OPENAMIGA_GCC_OPEN2)
 #ifndef HAVE_LONG_LONG
 #define HAVE_LONG_LONG 1
 #endif
@@ -132,7 +133,7 @@ amiga_int64_t amiga_int64_shl(amiga_int64_t val, int shift);
 #define SIZEOF_LONG_LONG 8
 #endif
 
-#endif /* _AMIGA */
+#endif /* classic Amiga/VBCC long long compatibility */
 
 #ifdef HAVE_LONG_LONG
 #ifndef PY_LONG_LONG
@@ -155,6 +156,12 @@ amiga_int64_t amiga_int64_shl(amiga_int64_t val, int shift);
 #endif /* LLONG_MAX */
 #endif
 #endif /* HAVE_LONG_LONG */
+
+/* This fork names the unsigned form so it can also represent the classic
+ * VBCC compatibility type above.  On conforming compilers it is native. */
+#ifndef unsigned_PY_LONG_LONG
+#define unsigned_PY_LONG_LONG unsigned PY_LONG_LONG
+#endif
 
 /* a build with 30-bit digits for Python long integers needs an exact-width
  * 32-bit unsigned integer type to store those digits.  (We could just use

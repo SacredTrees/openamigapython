@@ -340,6 +340,9 @@ then
 	*-*-cygwin*)
 		ac_sys_system=Cygwin
 		;;
+	*-*-amigaos*)
+		ac_sys_system=AmigaOS
+		;;
 	*)
 		# for now, limit cross builds to known configurations
 		MACHDEP="unknown"
@@ -385,6 +388,9 @@ if test "$cross_compiling" = yes; then
 		;;
 	*-*-cygwin*)
 		_host_cpu=
+		;;
+	*-*-amigaos*)
+		_host_cpu=m68k
 		;;
 	*)
 		# for now, limit cross builds to known configurations
@@ -3082,6 +3088,7 @@ AC_MSG_CHECKING(DYNLOADFILE)
 if test -z "$DYNLOADFILE"
 then
 	case $ac_sys_system/$ac_sys_release in
+	AmigaOS*) DYNLOADFILE="dynload_amiga.o";;
 	AIX*) # Use dynload_shlib.c and dlopen() if we have it; otherwise dynload_aix.c
 	if test "$ac_cv_func_dlopen" = yes
 	then DYNLOADFILE="dynload_shlib.o"
@@ -3366,18 +3373,21 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
   [AC_MSG_RESULT(no)
 ])
 
-# On some systems, setgroups is in unistd.h, on others, in grp.h
-AC_MSG_CHECKING(for setgroups)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+# On some systems, setgroups is in unistd.h, on others, in grp.h.  Keep the
+# result cacheable: the OpenAmiga ac4 profile deliberately pre-seeds it to no
+# because the libnix implementation pulls the Unix account database startup
+# hook into the executable before main().
+AC_CACHE_CHECK([for setgroups], [ac_cv_func_setgroups],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <unistd.h>
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
 ]], [[void* p = setgroups]])],
-  [AC_DEFINE(HAVE_SETGROUPS, 1, Define if you have the 'setgroups' function.)
-   AC_MSG_RESULT(yes)],
-  [AC_MSG_RESULT(no)
-])
+    [ac_cv_func_setgroups=yes],
+    [ac_cv_func_setgroups=no])])
+AS_IF([test "x$ac_cv_func_setgroups" = xyes],
+  [AC_DEFINE(HAVE_SETGROUPS, 1, Define if you have the 'setgroups' function.)])
 
 # check for openpty and forkpty
 

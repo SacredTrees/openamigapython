@@ -19,6 +19,14 @@
 #include "marshal.h"
 #include "abstract.h"
 
+#if defined(OPENAMIGA_GCC_OPEN2) && \
+    defined(OPENAMIGAPYTHON_STARTUP_TRACE)
+extern void openamiga_ac4_trace(const char *message);
+#define AC4_TRACE(message) openamiga_ac4_trace(message)
+#else
+#define AC4_TRACE(message) ((void)0)
+#endif
+
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
@@ -185,6 +193,8 @@ Py_InitializeEx(int install_sigs)
 #endif
     extern void _Py_ReadyTypes(void);
 
+    AC4_TRACE("initialize:entry");
+
     if (initialized)
         return;
     initialized = 1;
@@ -201,8 +211,10 @@ Py_InitializeEx(int install_sigs)
        check its value further. */
     if ((p = Py_GETENV("PYTHONHASHSEED")) && *p != '\0')
         Py_HashRandomizationFlag = add_flag(Py_HashRandomizationFlag, p);
+    AC4_TRACE("initialize:after-environment");
 
     _PyRandom_Init();
+    AC4_TRACE("initialize:after-random");
 
     interp = PyInterpreterState_New();
     if (interp == NULL)
@@ -212,8 +224,10 @@ Py_InitializeEx(int install_sigs)
     if (tstate == NULL)
         Py_FatalError("Py_Initialize: can't make first thread");
     (void) PyThreadState_Swap(tstate);
+    AC4_TRACE("initialize:after-thread-state");
 
     _Py_ReadyTypes();
+    AC4_TRACE("initialize:after-ready-types");
 
     if (!_PyFrame_Init())
         Py_FatalError("Py_Initialize: can't init frames");
@@ -228,6 +242,7 @@ Py_InitializeEx(int install_sigs)
         Py_FatalError("Py_Initialize: can't init bytearray");
 
     _PyFloat_Init();
+    AC4_TRACE("initialize:after-core-types");
 
     interp->modules = PyDict_New();
     if (interp->modules == NULL)
@@ -235,11 +250,13 @@ Py_InitializeEx(int install_sigs)
     interp->modules_reloading = PyDict_New();
     if (interp->modules_reloading == NULL)
         Py_FatalError("Py_Initialize: can't make modules_reloading dictionary");
+    AC4_TRACE("initialize:after-module-dicts");
 
 #ifdef Py_USING_UNICODE
     /* Init Unicode implementation; relies on the codec registry */
     _PyUnicode_Init();
 #endif
+    AC4_TRACE("initialize:after-unicode");
 
     bimod = _PyBuiltin_Init();
     if (bimod == NULL)
@@ -248,6 +265,7 @@ Py_InitializeEx(int install_sigs)
     if (interp->builtins == NULL)
         Py_FatalError("Py_Initialize: can't initialize builtins dict");
     Py_INCREF(interp->builtins);
+    AC4_TRACE("initialize:after-builtins");
 
     sysmod = _PySys_Init();
     if (sysmod == NULL)
@@ -256,12 +274,16 @@ Py_InitializeEx(int install_sigs)
     if (interp->sysdict == NULL)
         Py_FatalError("Py_Initialize: can't initialize sys dict");
     Py_INCREF(interp->sysdict);
+    AC4_TRACE("initialize:after-sys");
     _PyImport_FixupExtension("sys", "sys");
+    AC4_TRACE("initialize:before-get-path");
     PySys_SetPath(Py_GetPath());
+    AC4_TRACE("initialize:after-get-path");
     PyDict_SetItemString(interp->sysdict, "modules",
                          interp->modules);
 
     _PyImport_Init();
+    AC4_TRACE("initialize:after-import");
 
     /* initialize builtin exceptions */
     _PyExc_Init();
@@ -269,14 +291,18 @@ Py_InitializeEx(int install_sigs)
 
     /* phase 2 of builtins */
     _PyImport_FixupExtension("__builtin__", "__builtin__");
+    AC4_TRACE("initialize:after-exceptions");
 
     _PyImportHooks_Init();
+    AC4_TRACE("initialize:after-import-hooks");
 
     if (install_sigs)
         initsigs(); /* Signal handling stuff, including initintr() */
+    AC4_TRACE("initialize:after-signals");
 
     /* Initialize warnings. */
     _PyWarnings_Init();
+    AC4_TRACE("initialize:after-warnings");
     if (PySys_HasWarnOptions()) {
         PyObject *warnings_module = PyImport_ImportModule("warnings");
         if (!warnings_module)
@@ -285,6 +311,7 @@ Py_InitializeEx(int install_sigs)
     }
 
     initmain(); /* Module __main__ */
+    AC4_TRACE("initialize:after-main-module");
 
     /* auto-thread-state API, if available */
 #ifdef WITH_THREAD
@@ -293,6 +320,7 @@ Py_InitializeEx(int install_sigs)
 
     if (!Py_NoSiteFlag)
         initsite(); /* Module site */
+    AC4_TRACE("initialize:after-site");
 
     if ((p = Py_GETENV("PYTHONIOENCODING")) && *p != '\0') {
         p = icodeset = codeset = strdup(p);
@@ -304,6 +332,7 @@ Py_InitializeEx(int install_sigs)
         }
         overridden = 1;
     }
+    AC4_TRACE("initialize:after-io-environment");
 
 #if defined(Py_USING_UNICODE) && defined(HAVE_LANGINFO_H) && defined(CODESET)
     /* On Unix, set the file system encoding according to the
@@ -384,6 +413,7 @@ Py_InitializeEx(int install_sigs)
         if (free_codeset)
             free(codeset);
     }
+    AC4_TRACE("initialize:complete");
 }
 
 void

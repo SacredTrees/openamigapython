@@ -19,6 +19,8 @@ class GCCOpen2GateTest(unittest.TestCase):
         self.assertEqual(len([p for p in files if p.startswith("patches/libnix/")]), 6)
         self.assertEqual(len([p for p in files if p.startswith("patches/aros-stuff/")]), 4)
         self.assertIn("prefix/libexec/gcc/m68k-amigaos/16.2.0b/cc1", files)
+        self.assertIn("prefix/bin/m68k-amigaos-ar", files)
+        self.assertIn("prefix/bin/m68k-amigaos-ranlib", files)
         self.assertIn("prefix/m68k-amigaos/libnix/lib/libnix.a", files)
         self.assertTrue(all(len(digest) == 64 for digest in files.values()))
 

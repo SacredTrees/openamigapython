@@ -332,7 +332,7 @@ PyString_FromFormatV(const char *format, va_list vargs)
                         (long)va_arg(vargs, Py_ssize_t));
 #else
                 else if (size_tflag)
-                    sprintf(s, "%" PY_FORMAT_SIZE_T "ld",
+                    sprintf(s, "%" PY_FORMAT_SIZE_T "d",
                         va_arg(vargs, Py_ssize_t));
 #endif
                 else
@@ -346,7 +346,7 @@ PyString_FromFormatV(const char *format, va_list vargs)
 #ifdef HAVE_LONG_LONG
                 else if (longlongflag)
                     sprintf(s, "%" PY_FORMAT_LONG_LONG "u",
-                        va_arg(vargs, PY_LONG_LONG));
+                        va_arg(vargs, unsigned_PY_LONG_LONG));
 #endif
 #ifdef __VBCC__
                 else if (size_tflag)
@@ -4868,7 +4868,7 @@ void _Py_ReleaseInternedStrings(void)
     fprintf(stderr, "releasing %ld interned strings\n",
         (long)n);
 #else
-    fprintf(stderr, "releasing %" PY_FORMAT_SIZE_T "ld interned strings\n",
+    fprintf(stderr, "releasing %" PY_FORMAT_SIZE_T "d interned strings\n",
         n);
 #endif
     for (i = 0; i < n; i++) {
@@ -4896,7 +4896,7 @@ void _Py_ReleaseInternedStrings(void)
                     "mortal/immortal\n", (long)mortal_size, (long)immortal_size);
 #else
     fprintf(stderr, "total size of all interned strings: "
-                    "%" PY_FORMAT_SIZE_T "ld/%" PY_FORMAT_SIZE_T "ld "
+                    "%" PY_FORMAT_SIZE_T "d/%" PY_FORMAT_SIZE_T "d "
                     "mortal/immortal\n", mortal_size, immortal_size);
 #endif
     Py_DECREF(keys);

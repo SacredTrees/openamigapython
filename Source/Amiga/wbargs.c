@@ -129,8 +129,10 @@ ReorderWBArgv(int argc, char **argv)
 
             memmove(argv[i], argv[i] + 13, strlen(argv[i] + 13) + 1);
             thisarg = argv[i];
-            for (j = (short)i; j > 1; )
-                argv[j] = argv[--j];
+            for (j = (short)i; j > 1; ) {
+                --j;
+                argv[j + 1] = argv[j];
+            }
             argv[1] = thisarg;
         }
 

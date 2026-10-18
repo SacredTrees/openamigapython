@@ -6,7 +6,7 @@
 #include "timefuncs.h"
 
 /* Amiga-specific timezone variables */
-#ifdef _AMIGA
+#if defined(_AMIGA) && !defined(OPENAMIGA_GCC_OPEN2)
 extern char *tzname[2];
 extern long timezone;
 extern int daylight;
@@ -845,6 +845,8 @@ inittimezone(PyObject *m) {
     tzset();
 #ifdef PYOS_OS2
     PyModule_AddIntConstant(m, "timezone", _timezone);
+#elif defined(OPENAMIGA_GCC_OPEN2)
+    PyModule_AddIntConstant(m, "timezone", _timezone);
 #else /* !PYOS_OS2 */
     PyModule_AddIntConstant(m, "timezone", timezone);
 #endif /* PYOS_OS2 */
@@ -854,14 +856,20 @@ inittimezone(PyObject *m) {
 #ifdef PYOS_OS2
     PyModule_AddIntConstant(m, "altzone", (long)(_timezone-3600));
 #else /* !PYOS_OS2 */
-#ifdef _AMIGA
+#ifdef OPENAMIGA_GCC_OPEN2
+    PyModule_AddIntConstant(m, "altzone", (long)(_timezone-3600));
+#elif defined(_AMIGA)
     PyModule_AddIntConstant(m, "altzone", (long)(timezone-3600));
 #else
     PyModule_AddIntConstant(m, "altzone", timezone-3600);
 #endif
 #endif /* PYOS_OS2 */
 #endif
+#ifdef OPENAMIGA_GCC_OPEN2
+    PyModule_AddIntConstant(m, "daylight", _daylight);
+#else
     PyModule_AddIntConstant(m, "daylight", daylight);
+#endif
     PyModule_AddObject(m, "tzname",
                        Py_BuildValue("(zz)", tzname[0], tzname[1]));
 #else /* !HAVE_TZNAME || __GLIBC__ || __CYGWIN__*/

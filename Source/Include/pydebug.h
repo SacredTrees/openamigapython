@@ -31,7 +31,13 @@ PyAPI_DATA(int) Py_HashRandomizationFlag;
 /* this is a wrapper around getenv() that pays attention to
    Py_IgnoreEnvironmentFlag.  It should be used for getting variables like
    PYTHONPATH and PYTHONHOME from the environment */
+#ifdef OPENAMIGA_GCC_OPEN2
+PyAPI_FUNC(char *) openamiga_ac4_getenv(const char *name);
+#define Py_GETENV(s) \
+    (Py_IgnoreEnvironmentFlag ? NULL : openamiga_ac4_getenv(s))
+#else
 #define Py_GETENV(s) (Py_IgnoreEnvironmentFlag ? NULL : getenv(s))
+#endif
 
 PyAPI_FUNC(void) Py_FatalError(const char *message);
 

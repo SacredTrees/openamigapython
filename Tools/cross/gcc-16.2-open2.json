@@ -6,7 +6,9 @@
   "version_stamp": "16.2.0b 20260930174807",
   "compiler": "prefix/bin/m68k-amigaos-gcc",
   "files": {
+    "prefix/bin/m68k-amigaos-ar": "a92c640b18a6ba9a148754181c6f036da0c3ec96b8bcd15ff0d2953879ca5914",
     "prefix/bin/m68k-amigaos-gcc": "19aa5ae3a8af24380b1cf1f32218ab8d4af69ff5777a1733925e54e5635e27f3",
+    "prefix/bin/m68k-amigaos-ranlib": "d57009177be850f779c4ac537733388d99c5459f9b98890c604e99ada09e39f5",
     "prefix/libexec/gcc/m68k-amigaos/16.2.0b/cc1": "dfdd71265e008d1e96b27b7eb0fd6ca1a92dd626f7dbe175d055177e37e6c388",
     "prefix/libexec/gcc/m68k-amigaos/16.2.0b/cc1plus": "4c70089a876fa2e41dee21ff9ed3f334f3af29b0b0699dd0c33e41fe87f9130d",
     "prefix/m68k-amigaos/lib/libpthread.a": "223c132ce0114b6969a4538490cb11b4fb86b9745d5102bc46432393ba5b3e6e",

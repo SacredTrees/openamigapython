@@ -3287,6 +3287,9 @@ then
 	*-*-cygwin*)
 		ac_sys_system=Cygwin
 		;;
+	*-*-amigaos*)
+		ac_sys_system=AmigaOS
+		;;
 	*)
 		# for now, limit cross builds to known configurations
 		MACHDEP="unknown"
@@ -3332,6 +3335,9 @@ if test "$cross_compiling" = yes; then
 		;;
 	*-*-cygwin*)
 		_host_cpu=
+		;;
+	*-*-amigaos*)
+		_host_cpu=m68k
 		;;
 	*)
 		# for now, limit cross builds to known configurations
@@ -10604,6 +10610,7 @@ $as_echo_n "checking DYNLOADFILE... " >&6; }
 if test -z "$DYNLOADFILE"
 then
 	case $ac_sys_system/$ac_sys_release in
+	AmigaOS*) DYNLOADFILE="dynload_amiga.o";;
 	AIX*) # Use dynload_shlib.c and dlopen() if we have it; otherwise dynload_aix.c
 	if test "$ac_cv_func_dlopen" = yes
 	then DYNLOADFILE="dynload_shlib.o"
@@ -11461,9 +11468,14 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-# On some systems, setgroups is in unistd.h, on others, in grp.h
+# On some systems, setgroups is in unistd.h, on others, in grp.h.  Keep the
+# result cacheable so target profiles can deliberately disable the libnix
+# account-database startup dependency.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for setgroups" >&5
 $as_echo_n "checking for setgroups... " >&6; }
+if ${ac_cv_func_setgroups+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -11481,17 +11493,19 @@ void* p = setgroups
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_func_setgroups=yes
+else
+  ac_cv_func_setgroups=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_setgroups" >&5
+$as_echo "$ac_cv_func_setgroups" >&6; }
+if test "x$ac_cv_func_setgroups" = xyes; then :
 
 $as_echo "#define HAVE_SETGROUPS 1" >>confdefs.h
 
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 # check for openpty and forkpty
 

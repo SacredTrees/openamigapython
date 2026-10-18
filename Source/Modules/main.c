@@ -2,6 +2,14 @@
 
 #include "Python.h"
 #include "osdefs.h"
+
+#if defined(OPENAMIGA_GCC_OPEN2) && \
+    defined(OPENAMIGAPYTHON_STARTUP_TRACE)
+extern void openamiga_ac4_trace(const char *message);
+#define AC4_TRACE(message) openamiga_ac4_trace(message)
+#else
+#define AC4_TRACE(message) ((void)0)
+#endif
 #include "code.h" /* For CO_FUTURE_DIVISION */
 #include "import.h"
 
@@ -258,6 +266,8 @@ Py_Main(int argc, char **argv)
     int saw_unbuffered_flag = 0;
     PyCompilerFlags cf;
 
+    AC4_TRACE("py-main:entry");
+
     cf.cf_flags = 0;
 
     orig_argc = argc;           /* For Py_GetArgcArgv() */
@@ -285,13 +295,16 @@ Py_Main(int argc, char **argv)
             break;
         }
     }
+    AC4_TRACE("py-main:after-early-options");
     /* The variable is only tested for existence here; _PyRandom_Init will
        check its value further. */
     if (!Py_HashRandomizationFlag &&
         (p = Py_GETENV("PYTHONHASHSEED")) && *p != '\0')
         Py_HashRandomizationFlag = 1;
 
+    AC4_TRACE("py-main:before-random-init");
     _PyRandom_Init();
+    AC4_TRACE("py-main:after-random-init");
 
     PySys_ResetWarnOptions();
     _PyOS_ResetGetOpt();
@@ -443,6 +456,7 @@ Py_Main(int argc, char **argv)
 
         }
     }
+    AC4_TRACE("py-main:after-options");
 
     if (help)
         return usage(0, argv[0]);
@@ -495,7 +509,9 @@ Py_Main(int argc, char **argv)
 #endif
     }
 
+    AC4_TRACE("py-main:before-fd-interactive");
     stdin_is_interactive = Py_FdIsInteractive(stdin, (char *)0);
+    AC4_TRACE("py-main:after-fd-interactive");
 
     if (unbuffered) {
 #if defined(MS_WINDOWS) || defined(__CYGWIN__)
@@ -546,9 +562,13 @@ Py_Main(int argc, char **argv)
     else
         Py_SetProgramName(argv[0]);
 #else
+    AC4_TRACE("py-main:before-set-program-name");
     Py_SetProgramName(argv[0]);
+    AC4_TRACE("py-main:after-set-program-name");
 #endif
+    AC4_TRACE("py-main:before-initialize");
     Py_Initialize();
+    AC4_TRACE("py-main:after-initialize");
 
     if (Py_VerboseFlag ||
         (command == NULL && filename == NULL && module == NULL && stdin_is_interactive)) {
@@ -573,7 +593,9 @@ Py_Main(int argc, char **argv)
         argv[_PyOS_optind] = "-c";
     }
 
+    AC4_TRACE("py-main:before-set-argv");
     PySys_SetArgv(argc-_PyOS_optind, argv+_PyOS_optind);
+    AC4_TRACE("py-main:after-set-argv");
 
     if ((Py_InspectFlag || (command == NULL && filename == NULL && module == NULL)) &&
         isatty(fileno(stdin))) {
@@ -586,7 +608,9 @@ Py_Main(int argc, char **argv)
     }
 
     if (command) {
+        AC4_TRACE("py-main:before-command");
         sts = PyRun_SimpleStringFlags(command, &cf) != 0;
+        AC4_TRACE("py-main:after-command");
         free(command);
     } else if (module) {
         sts = (RunModule(module, 1) != 0);
@@ -671,7 +695,9 @@ Py_Main(int argc, char **argv)
         sts = PyRun_AnyFileFlags(stdin, "<stdin>", &cf) != 0;
     }
 
+    AC4_TRACE("py-main:before-finalize");
     Py_Finalize();
+    AC4_TRACE("py-main:after-finalize");
 #ifdef RISCOS
     if (Py_RISCOSWimpFlag)
         fprintf(stderr, "\x0cq\x0c"); /* make frontend quit */

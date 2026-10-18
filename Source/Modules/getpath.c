@@ -558,8 +558,14 @@ calculate_path(void)
     char *pythonpath = PYTHONPATH;
     char *rtpypath = Py_GETENV("PYTHONPATH");
     char *home = Py_GetPythonHome();
+#ifndef OPENAMIGA_GCC_OPEN2
     char *path = getenv("PATH");
     char *prog = Py_GetProgramName();
+#else
+    /* The Amiga branch below uses fullprogpath(), not the Unix PATH search.
+       Avoid libnix getenv() here: besides being unused, it can block under
+       the AmigaChrome launch environment. */
+#endif
     char argv0_path[MAXPATHLEN+1];
     char zip_path[MAXPATHLEN+1];
     int pfound, efound; /* 1 if found; -1 if found build directory */

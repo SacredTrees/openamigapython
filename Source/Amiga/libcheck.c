@@ -29,15 +29,19 @@
 #include <proto/exec.h>
 #include <constructor.h>
 
-/* global h_errno */
+/* global h_errno (provided by libsocket in the open2 build) */
+#ifdef OPENAMIGA_GCC_OPEN2
+extern int h_errno;
+#else
 int h_errno = 0;
+#endif
 
 /* Real bases only — NULL means not open. */
 struct Library *UserGroupBase = NULL;
 struct Library *UtilityBase = NULL;
 
 /* Owned by posix.lib when HAVE_POSIXLIB; otherwise we provide the base. */
-#ifdef HAVE_POSIXLIB
+#if defined(HAVE_POSIXLIB) || defined(OPENAMIGA_GCC_OPEN2)
 extern struct Library *SocketBase;
 #else
 struct Library *SocketBase = NULL;

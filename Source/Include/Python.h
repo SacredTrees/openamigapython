@@ -5,8 +5,20 @@
 /* Include nearly all Python header files */
 
 #include "patchlevel.h"
-#include "pyconfig.h"
+#ifdef OPENAMIGA_GCC_OPEN2
+/* ac4 is configured out of tree; prefer its generated target config. */
+# include <pyconfig.h>
+#else
+/* ac3-classic keeps the proven hand-maintained VBCC configuration. */
+# include "pyconfig.h"
+#endif
 #include "pymacconfig.h"
+
+#if AC_BUILD >= 4
+# if !defined(__GNUC__) || !defined(OPENAMIGA_GCC_OPEN2)
+#  error "OpenAmigaPython ac4 requires verified GCC 16.2-open2"
+# endif
+#endif
 
 /* Cyclic gc is always enabled, starting with release 2.3a1.  Supply the
  * old symbol for the benefit of extension modules written before then

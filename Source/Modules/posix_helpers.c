@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <string.h>
 
+#ifndef OPENAMIGA_GCC_OPEN2
 /* Convert uid_t to Python int */
 PyObject *
 _PyInt_FromUid(uid_t uid)
@@ -60,6 +61,7 @@ _Py_Gid_Converter(PyObject *obj, void *p)
     PyErr_SetString(PyExc_TypeError, "gid must be an integer");
     return 0;
 }
+#endif
 
 #ifdef _AMIGA
 /*

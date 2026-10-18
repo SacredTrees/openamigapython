@@ -91,13 +91,13 @@ NOTE: In the interpreter's initialization phase, some globals are currently
 
 /* No extern C block needed - this is a C file */
 
-#ifdef _AMIGA
+#ifdef __VBCC__
 /* VBCC compatibility: define Py_UNICODE as unsigned short */
 typedef unsigned short Py_UNICODE;
 #endif
 
 /* Free list for Unicode objects */
-#ifdef _AMIGA
+#ifdef __VBCC__
 /* VBCC compatibility: forward declare the struct */
 struct PyUnicodeObject;
 static struct PyUnicodeObject *free_list = NULL;
@@ -107,7 +107,7 @@ static PyUnicodeObject *free_list = NULL;
 static int numfree = 0;
 
 /* The empty Unicode object is shared to improve performance. */
-#ifdef _AMIGA
+#ifdef __VBCC__
 static struct PyUnicodeObject *unicode_empty = NULL;
 #else
 static PyUnicodeObject *unicode_empty = NULL;
@@ -127,7 +127,7 @@ static PyUnicodeObject *unicode_empty = NULL;
 
 /* Single character Unicode strings in the Latin-1 range are being
    shared as well. */
-#ifdef _AMIGA
+#ifdef __VBCC__
 static struct PyUnicodeObject *unicode_latin1[256] = {NULL};
 #else
 static PyUnicodeObject *unicode_latin1[256] = {NULL};

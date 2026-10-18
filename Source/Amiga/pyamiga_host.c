@@ -57,7 +57,9 @@
 #include "pyamiga_plugin.h"
 #include "timefuncs.h"
 
+#ifdef __VBCC__
 extern int __init_bsdsocket(int);
+#endif
 extern struct Library *SocketBase;
 extern int h_errno;
 extern struct ExecBase *SysBase;
@@ -77,6 +79,7 @@ static struct PyHost pyamiga_host;
  */
 static APTR pyamiga_host_a4;
 
+#ifdef __VBCC__
 /* VBCC register stubs (same style as Amiga/syslog.c LVO stubs).
  * Do not append rts — vbcc already emits one after the string body. */
 static APTR pyamiga_get_a4(void)
@@ -157,6 +160,154 @@ static LONG amitcp_lvo_WaitSelect(__reg("d7") void *base,
     __reg("d0") LONG nfds, __reg("a0") APTR r, __reg("a1") APTR w,
     __reg("a2") APTR e, __reg("a3") APTR tv, __reg("d1") ULONG *sigs)
     = AMITCP_LVO(126);
+#else
+/*
+ * GCC 16.2-open2 has ABI-correct NDK inline stubs.  Unlike the VBCC path,
+ * GCC does not need to preserve a process-global A4 base, so the A4 hooks
+ * are intentionally no-ops and the wrappers dispatch through SocketBase.
+ */
+#include <proto/bsdsocket.h>
+
+static APTR
+pyamiga_get_a4(void)
+{
+    return NULL;
+}
+
+static void
+pyamiga_set_a4(APTR value)
+{
+    (void)value;
+}
+
+static LONG
+amitcp_lvo_socket(void *base, LONG domain, LONG type, LONG protocol)
+{
+    (void)base;
+    return (LONG)socket(domain, type, protocol);
+}
+
+static LONG
+amitcp_lvo_bind(void *base, LONG sock, APTR name, LONG namelen)
+{
+    (void)base;
+    return (LONG)bind(sock, (struct sockaddr *)name, namelen);
+}
+
+static LONG
+amitcp_lvo_listen(void *base, LONG sock, LONG backlog)
+{
+    (void)base;
+    return (LONG)listen(sock, backlog);
+}
+
+static LONG
+amitcp_lvo_accept(void *base, LONG sock, APTR addr, APTR addrlen)
+{
+    (void)base;
+    return (LONG)accept(sock, (struct sockaddr *)addr, (socklen_t *)addrlen);
+}
+
+static LONG
+amitcp_lvo_connect(void *base, LONG sock, APTR name, LONG namelen)
+{
+    (void)base;
+    return (LONG)connect(sock, (struct sockaddr *)name, namelen);
+}
+
+static LONG
+amitcp_lvo_sendto(void *base, LONG sock, APTR buf, LONG len, LONG flags,
+                  APTR to, LONG tolen)
+{
+    (void)base;
+    return (LONG)sendto(sock, buf, len, flags, (struct sockaddr *)to, tolen);
+}
+
+static LONG
+amitcp_lvo_send(void *base, LONG sock, APTR buf, LONG len, LONG flags)
+{
+    (void)base;
+    return (LONG)send(sock, buf, len, flags);
+}
+
+static LONG
+amitcp_lvo_recvfrom(void *base, LONG sock, APTR buf, LONG len, LONG flags,
+                    APTR addr, APTR addrlen)
+{
+    (void)base;
+    return (LONG)recvfrom(sock, buf, len, flags, (struct sockaddr *)addr,
+                          (socklen_t *)addrlen);
+}
+
+static LONG
+amitcp_lvo_recv(void *base, LONG sock, APTR buf, LONG len, LONG flags)
+{
+    (void)base;
+    return (LONG)recv(sock, buf, len, flags);
+}
+
+static LONG
+amitcp_lvo_shutdown(void *base, LONG sock, LONG how)
+{
+    (void)base;
+    return (LONG)shutdown(sock, how);
+}
+
+static LONG
+amitcp_lvo_setsockopt(void *base, LONG sock, LONG level, LONG optname,
+                      APTR optval, LONG optlen)
+{
+    (void)base;
+    return (LONG)setsockopt(sock, level, optname, optval, optlen);
+}
+
+static LONG
+amitcp_lvo_getsockopt(void *base, LONG sock, LONG level, LONG optname,
+                      APTR optval, APTR optlen)
+{
+    (void)base;
+    return (LONG)getsockopt(sock, level, optname, optval,
+                            (socklen_t *)optlen);
+}
+
+static LONG
+amitcp_lvo_getsockname(void *base, LONG sock, APTR name, APTR namelen)
+{
+    (void)base;
+    return (LONG)getsockname(sock, (struct sockaddr *)name,
+                             (socklen_t *)namelen);
+}
+
+static LONG
+amitcp_lvo_getpeername(void *base, LONG sock, APTR name, APTR namelen)
+{
+    (void)base;
+    return (LONG)getpeername(sock, (struct sockaddr *)name,
+                             (socklen_t *)namelen);
+}
+
+static LONG
+amitcp_lvo_IoctlSocket(void *base, LONG sock, ULONG req, APTR argp)
+{
+    (void)base;
+    return (LONG)IoctlSocket(sock, req, argp);
+}
+
+static LONG
+amitcp_lvo_CloseSocket(void *base, LONG sock)
+{
+    (void)base;
+    return (LONG)CloseSocket(sock);
+}
+
+static LONG
+amitcp_lvo_WaitSelect(void *base, LONG nfds, APTR r, APTR w, APTR e,
+                      APTR tv, ULONG *sigs)
+{
+    (void)base;
+    return (LONG)WaitSelect(nfds, r, w, e, tv, sigs);
+}
+#endif
 
 static int pyamiga_ensure_bsdsocket(void);
 
@@ -318,7 +469,12 @@ pyamiga_ensure_bsdsocket(void)
     pr = (struct Process *)FindTask(NULL);
     oldwin = pr->pr_WindowPtr;
     pr->pr_WindowPtr = (APTR)-1L;
+#ifdef __VBCC__
     rc = __init_bsdsocket(-1);
+#else
+    SocketBase = OpenLibrary("bsdsocket.library", 4);
+    rc = (SocketBase != NULL) ? 0 : -1;
+#endif
     pr->pr_WindowPtr = oldwin;
 
     if (rc != 0 || SocketBase == NULL) {

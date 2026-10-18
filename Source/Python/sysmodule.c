@@ -22,6 +22,14 @@ Data members:
 
 #include "osdefs.h"
 
+#if defined(OPENAMIGA_GCC_OPEN2) && \
+    defined(OPENAMIGAPYTHON_STARTUP_TRACE)
+extern void openamiga_ac4_trace(const char *message);
+#define AC4_TRACE(message) openamiga_ac4_trace(message)
+#else
+#define AC4_TRACE(message) ((void)0)
+#endif
+
 #ifdef MS_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
@@ -1360,9 +1368,12 @@ _PySys_Init(void)
     PyObject *sysin, *sysout, *syserr;
     char *s;
 
+    AC4_TRACE("sys-init:entry");
+
     m = Py_InitModule3("sys", sys_methods, sys_doc);
     if (m == NULL)
         return NULL;
+    AC4_TRACE("sys-init:after-module");
     sysdict = PyModule_GetDict(m);
 #define SET_SYS_FROM_STRING(key, value)                 \
     v = value;                                          \
@@ -1397,9 +1408,13 @@ _PySys_Init(void)
      * On OS X, fflush()ing stdin causes an error, so we exempt stdin
      * from that procedure.
      */
+    AC4_TRACE("sys-init:before-stdin");
     sysin = PyFile_FromFile(stdin, "<stdin>", "r", NULL);
+    AC4_TRACE("sys-init:after-stdin");
     sysout = PyFile_FromFile(stdout, "<stdout>", "w", _check_and_flush);
+    AC4_TRACE("sys-init:after-stdout");
     syserr = PyFile_FromFile(stderr, "<stderr>", "w", _check_and_flush);
+    AC4_TRACE("sys-init:after-stderr");
     if (PyErr_Occurred())
         return NULL;
 
@@ -1417,6 +1432,7 @@ _PySys_Init(void)
     Py_XDECREF(sysin);
     Py_XDECREF(sysout);
     Py_XDECREF(syserr);
+    AC4_TRACE("sys-init:after-standard-streams");
 
     SET_SYS_FROM_STRING("version",
                          PyString_FromString(Py_GetVersion()));
@@ -1453,12 +1469,14 @@ _PySys_Init(void)
                         PyFloat_GetInfo());
     SET_SYS_FROM_STRING("long_info",
                         PyLong_GetInfo());
+    AC4_TRACE("sys-init:after-core-metadata");
 #ifdef Py_USING_UNICODE
     SET_SYS_FROM_STRING("maxunicode",
                         PyInt_FromLong(PyUnicode_GetMax()));
 #endif
     SET_SYS_FROM_STRING("builtin_module_names",
                         list_builtin_module_names());
+    AC4_TRACE("sys-init:after-builtin-names");
     {
         /* Assumes that longs are at least 2 bytes long.
            Should be safe! */
@@ -1488,6 +1506,7 @@ _PySys_Init(void)
     if (warnoptions != NULL) {
         PyDict_SetItemString(sysdict, "warnoptions", warnoptions);
     }
+    AC4_TRACE("sys-init:after-warnoptions");
 
     /* version_info */
     if (VersionInfoType.tp_name == 0)
@@ -1504,6 +1523,7 @@ _PySys_Init(void)
     /* prevent user from creating new instances */
     FlagsType.tp_init = NULL;
     FlagsType.tp_new = NULL;
+    AC4_TRACE("sys-init:after-flags");
 
 
 #if defined(MS_WINDOWS)
@@ -1527,6 +1547,7 @@ _PySys_Init(void)
 #undef SET_SYS_FROM_STRING
     if (PyErr_Occurred())
         return NULL;
+    AC4_TRACE("sys-init:complete");
     return m;
 }
 
