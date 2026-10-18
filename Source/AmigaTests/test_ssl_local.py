@@ -1,6 +1,7 @@
 # Local _ssl / ssl smoke tests (no remote hosts).
-# Needs a rebuilt _ssl.module plus amitls.library (default) or AmiSSL 5
-# (SSL_CFLAGS_AMISSL build). amiga_plugin_rev 12=AmiTLS, 13=AmiSSL.
+# Needs a rebuilt _ssl.module plus opentls.library (default), amitls.library
+# (SSL_CFLAGS_AMITLS build) or AmiSSL 5 (SSL_CFLAGS_AMISSL build).
+# amiga_plugin_rev 12=AmiTLS, 13=AmiSSL, 14=OpenTLS.
 # ASCII only (Python 2.7 / Amiga).
 #
 #   python27 AmigaTests/run.py ssl
@@ -18,8 +19,9 @@ def test_00_dynload_ssl():
     if mod is None:
         return
     rev = getattr(mod, "amiga_plugin_rev", None)
-    check("_ssl.amiga_plugin_rev in (12,13)", rev in (12, 13),
-          "got %r (rebuild _ssl.module; 12=AmiTLS 13=AmiSSL)" % (rev,))
+    check("_ssl.amiga_plugin_rev in (12,13,14)", rev in (12, 13, 14),
+          "got %r (rebuild _ssl.module; 12=AmiTLS 13=AmiSSL 14=OpenTLS)"
+          % (rev,))
     check("_ssl has _SSLContext", hasattr(mod, "_SSLContext"))
     check("_ssl has CERT_NONE", hasattr(mod, "CERT_NONE"))
     check("_ssl has PROTOCOL_TLS", hasattr(mod, "PROTOCOL_TLS"))
@@ -29,8 +31,14 @@ def test_00_dynload_ssl():
     if rev is not None:
         print("  NOTE: amiga_plugin_rev =", rev)
         print("  NOTE: OPENSSL_VERSION =", getattr(mod, "OPENSSL_VERSION", "?"))
-        print("  NOTE: amitls_lib_revision =",
-              getattr(mod, "amitls_lib_revision", "?"))
+        if rev == 14:
+            print("  NOTE: opentls.library %s.%s, accelerated=0x%x" % (
+                getattr(mod, "opentls_lib_version", "?"),
+                getattr(mod, "opentls_lib_revision", "?"),
+                getattr(mod, "opentls_accelerated", 0)))
+        else:
+            print("  NOTE: amitls_lib_revision =",
+                  getattr(mod, "amitls_lib_revision", "?"))
     sys.stdout.flush()
 
 
@@ -106,3 +114,57 @@ def test_05_ssl_new_unconnected():
     sslobj = None
     sock = None
     raw = None
+
+
+def _opentls():
+    mod = require_import("_ssl")
+    if not mod or getattr(mod, "amiga_tls_backend", None) != "opentls":
+        skip("OpenTLS backend", "this _ssl.module is not the OpenTLS build")
+        return None
+    return mod
+
+
+def test_06_opentls_module():
+    mod = _opentls()
+    if not mod:
+        return
+    check("OpenTLS amiga_plugin_rev 14", mod.amiga_plugin_rev == 14)
+    check("OpenTLS HAS_ALPN", mod.HAS_ALPN is True)
+    check("OpenTLS OPENSSL_VERSION names the library",
+          mod.OPENSSL_VERSION.startswith("opentls.library "),
+          repr(mod.OPENSSL_VERSION))
+    check("OpenTLS library version >= 1", mod.opentls_lib_version >= 1)
+    paths = mod.get_default_verify_paths()
+    check("OpenTLS default CA file", paths[1] == "S:OpenTLS/ca-bundle.pem",
+          repr(paths))
+
+
+def test_07_opentls_context():
+    mod = _opentls()
+    ssl = require_import("ssl")
+    if not mod or not ssl:
+        return
+    try:
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+        stats = ctx.cert_store_stats()
+        check("OpenTLS new context trusts nothing", stats["x509_ca"] == 0,
+              repr(stats))
+        ctx.set_alpn_protocols(["h2", "http/1.1"])
+        check("OpenTLS set_alpn_protocols", True)
+        ctx.set_ciphers("ECDHE+AESGCM")
+        check("OpenTLS set_ciphers accepted", True)
+        dctx = ssl.create_default_context()
+        check("OpenTLS default context CERT_REQUIRED",
+              dctx.verify_mode == ssl.CERT_REQUIRED)
+        check("OpenTLS default context check_hostname",
+              dctx.check_hostname is True)
+    except Exception, e:
+        check("OpenTLS context", False, str(e))
+    try:
+        ssl.SSLContext(ssl.PROTOCOL_TLS).load_verify_locations(
+            capath="ENVARC:OpenTLS/certs")
+        check("OpenTLS capath refused", False, "no exception")
+    except NotImplementedError:
+        check("OpenTLS capath refused", True)
+    except Exception, e:
+        check("OpenTLS capath refused", False, str(e))

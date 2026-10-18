@@ -59,7 +59,7 @@ SUITE = [
 # Prefer: python27 AmigaTests/run.py socket socket_net
 #   (socket_net = DNS + HTTP GET - full _socket.module proof)
 # Prefer: python27 AmigaTests/run.py ssl ssl_net
-#   (ssl_net = TLS handshake + HTTPS GET - full _ssl.module / AmiTLS proof)
+#   (ssl_net = TLS handshake + HTTPS GET - full _ssl.module / OpenTLS proof)
 OPTIONAL = [
     ("socket", "AmigaTests.test_socket_local"),
     ("socket_net", "AmigaTests.test_socket_net"),

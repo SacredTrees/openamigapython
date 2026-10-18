@@ -213,7 +213,7 @@ These are the important gaps relative to a full CPython 2.7:
 
 **C extensions typically absent or not shipping as builtins**
 
-- `_ssl` is a **LoadSeg plugin** (`lib/lib-dynload/_ssl.module`), AmiTLS-backed; AmiSSL is compiled only as an alternate and is not the release default
+- `_ssl` is a **LoadSeg plugin** (`lib/lib-dynload/_ssl.module`), OpenTLS-backed (`opentls.library`); AmiTLS and AmiSSL are compiled only as alternates and are not the release default
 - `_ctypes`, `_sqlite3`, `_multiprocessing`, `_tkinter`, `_bsddb`, `_hotshot` / `_lsprof` profilers
 - `mmap`, `bz2`, `audioop`, `parser` (pgen), and many other optional Unix modules
 
@@ -285,11 +285,11 @@ This is **not** used for every binary module:
 - Modules with `static PyTypeObject` (tp_name in the plugin image) or C callbacks into a second library (stock `pyexpat` + `expat.library`) are unsafe as LoadSeg plugins on this ABI. Those stay linked, or are omitted in **SlimPython**.
 - Each new plugin needs host trampolines, an ABI bump, and 680x0 calling-convention care (scratch registers, no plugin-side `PyString_AS_STRING` on host objects).
 
-So plugins are for **optional, heavy, late-opened** libraries (`bsdsocket.library`, `amitls.library`). The rest of the C accelerator set is either always linked or left out of SlimPython. See `Docs/PLUGIN_GUIDE.md`.
+So plugins are for **optional, heavy, late-opened** libraries (`bsdsocket.library`, `opentls.library`). The rest of the C accelerator set is either always linked or left out of SlimPython. See `Docs/PLUGIN_GUIDE.md`.
 
-### Why does the ssl module only support AmiTLS and not AmiSSL?
+### Which TLS library does the ssl module use?
 
-Support for both AmiTLS and AmiSSL is a build configuration flag in the _ssl module implementation. However the AmiSSL build does not pass the unit tests, while the AmiTLS version does.
+OpenTLS (`opentls.library`, with `opencrypto.library`) by default: the AmigaChrome Team's TLS client, BearSSL with its maths in OpenCrypto, which AmigaChrome runs on its x86 or ARM64 cores and a real Amiga runs as 68k code. It gives `ssl.py` SNI, ALPN, real `cipher()` / `version()` answers, and `getpeercert()` with `subjectAltName`, so `ssl.match_hostname` works. AmiTLS and AmiSSL remain build configuration flags in the `_ssl` module (see BUILD.md); the AmiSSL build does not pass the unit tests.
 
 ### Why does AmigaPython only support bsdsocket.library?
 
@@ -363,7 +363,7 @@ Historic package notes: [Aminet Python20](https://www.aminet.net/package/dev/lan
 
 ### What AmigaOS versions does it target?
 
-Built and tested with **NDK 3.2** / ToolKit expectations for AmigaOS 3.x. Networking expects a **bsdsocket.library** stack (Roadshow, UAE net, etc.) to be able to use socket module, and **AmiTLS** for ssl module (AmiSSL support is currently too unstable and is not enabled in the release build). _hashlib functions depend on crc.library also from amigazen project.
+Built and tested with **NDK 3.2** / ToolKit expectations for AmigaOS 3.x. Networking expects a **bsdsocket.library** stack (Roadshow, UAE net, etc.) to be able to use socket module, and **OpenTLS** (`opentls.library` and `opencrypto.library`) for the ssl module; AmiTLS remains a build option, and AmiSSL support is currently too unstable and is not enabled in the release build. _hashlib functions depend on crc.library also from amigazen project.
 
 ### Will there be Python 3 / modern CPython on classic Amiga?
 

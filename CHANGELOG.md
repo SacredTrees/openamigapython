@@ -17,6 +17,7 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 
 ### Added
 
+- `_ssl` OpenTLS backend (`Modules/sslmodule_opentls.c`, `-DPYAMIGA_USE_OPENTLS`, headers via `opentlsinclude:`), now the default `_ssl.module` build: `opentls.library` API version 1 with SNI, ALPN, `cipher()` / `version()` from the connection, `getpeercert()` decoded from the certificate's DER (subject, issuer, dates, `subjectAltName`), CPython's empty trust store until `load_default_certs()`, and socket timeouts and Ctrl-C honoured through non-blocking I/O; `_ssl.amiga_tls_backend`, `opentls_lib_version`, `opentls_accelerated`; AmiTLS stays selectable with `SSL_CFLAGS_AMITLS`
 - OpenAmigaPython `ac2` distribution identity while retaining CPython ABI/version compatibility at 2.7.18
 - Reproducible stdlib ZIP ordering and timestamps, plus a host-side release builder that emits a file manifest and `SHA256SUMS`
 - Self-contained, versioned OpenUp Part generation with managed `Python:` and command-path startup entries

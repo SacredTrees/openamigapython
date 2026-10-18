@@ -51,7 +51,8 @@ Amiga filesystems are case-insensitive: only one of `arexx.py` /
 | `icon.library` | `amiga.DiskObject` | RuntimeError on use |
 | `rexxsyslib.library` | `_arexx` / `arexx` | ARexx APIs unavailable |
 | `bsdsocket.library` | `_socket.module` | `import _socket` fails cleanly |
-| `amitls.library` | `_ssl.module` (default) | `import _ssl` fails; switch to AmiSSL |
+| `opentls.library` 1+ with `opencrypto.library` | `_ssl.module` (default) | `import _ssl` fails; OpenUp installs both |
+| `amitls.library` | `_ssl.module` (AmiTLS build) | `import _ssl` fails |
 | AmiSSL 5 (`amisslmaster.library`) | `_ssl.module` (AmiSSL build) | `import _ssl` fails |
 
 The interpreter starts without `crc.library`; install from Aminet when you need hashing.
@@ -61,6 +62,8 @@ The interpreter starts without `crc.library`; install from Aminet when you need 
 Build from `Source/` with VBCC (same as the interpreter):
 
 ```
+Assign opentlsinclude: <DalsinAI/openamigatls include>
+; or for AmiTLS:
 Assign amitlsinclude: <AmiTLS SDK Include_H>
 ; or for AmiSSL:
 Assign sslinclude: <AmiSSL SDK Developer/include>
@@ -73,12 +76,31 @@ smake -f Modules/plugin/vmakefile
 
 | `SSL_CFLAGS` | Library | `_ssl.amiga_plugin_rev` |
 |--------------|---------|-------------------------|
-| `SSL_CFLAGS_AMITLS` (default production) | `amitls.library` | 12 |
+| `SSL_CFLAGS_OPENTLS` (default) | `opentls.library` | 14 |
+| `SSL_CFLAGS_AMITLS` | `amitls.library` | 12 |
 | `SSL_CFLAGS_AMISSL` (experimental) | AmiSSL 5 | 13 |
+
+OpenTLS (`Modules/sslmodule_opentls.c`) is the AmigaChrome Team's TLS client:
+BearSSL with `opencrypto.library` doing the maths, which AmigaChrome runs on
+its x86 or ARM64 cores (`_ssl.opentls_accelerated` shows which). Its
+`include/` needs the VBCC calls in `inline/opentls_protos.h` (openamigatls's
+`tools/gen_opentls_headers.py` writes them); GCC uses `inline/opentls.h`.
+What it offers through `ssl.py`:
+
+- TLS 1.2 for `PROTOCOL_TLS` (1.0 and 1.1 only when asked for by protocol),
+  SNI, ALPN (`set_alpn_protocols`), `cipher()` and `version()` from the
+  connection, and `getpeercert()` with subject, issuer, dates and
+  `subjectAltName`, so `ssl.match_hostname` works.
+- The trust store: a new context trusts nothing, as CPython's, until
+  `load_default_certs()` / `set_default_verify_paths()` (then
+  `S:OpenTLS/ca-bundle.pem` and `ENVARC:OpenTLS/certs/*.pem`) or
+  `load_verify_locations(cafile=..., cadata=...)`.
+- Not offered by OpenTLS API version 1: server sockets, client certificates,
+  NPN, `capath`.
 
 AmiSSL builds import and wrap, but `SSL_connect` currently fails with
 `SSLERR` / `want=NOTHING` (empty ERR queue) on live HTTPS. See the BUG
-comment in `Modules/sslmodule.c`. Keep AmiTLS as the default until fixed.
+comment in `Modules/sslmodule.c`.
 
 Flip the commented `SSL_CFLAGS=` line in that vmakefile to switch. After rebuild:
 
@@ -86,7 +108,9 @@ Flip the commented `SSL_CFLAGS=` line in that vmakefile to switch. After rebuild
 python27 AmigaTests/run.py ssl ssl_net
 ```
 
-Expect `OPENSSL_VERSION` to show AmiTLS or OpenSSL/AmiSSL text accordingly.
+Expect `OPENSSL_VERSION` to show `opentls.library`, AmiTLS or OpenSSL/AmiSSL
+text accordingly; the OpenTLS build also sets `_ssl.amiga_tls_backend` to
+`"opentls"`.
 
 ## Compiler 
 
