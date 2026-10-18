@@ -13,7 +13,8 @@ stable and sorted, and the install destination contains the full `acN` build
 identity so upgrades never overwrite a previous runtime in place.
 
 The Part declares `needs AmigaChrome`. OpenMulticore, OpenService, OpenCrypto
-and OpenTLS remain optional at runtime; inspect them with:
+and OpenTLS remain optional at runtime (`import ssl` needs OpenTLS and
+OpenCrypto; everything else starts without them); inspect them with:
 
 ```
 Python -m amigachrome.info

@@ -6,8 +6,11 @@
 # Also one SSLContext.wrap_socket(..., server_hostname=) path (SNI).
 #
 # AmiTLS rev 12 maps peer-close READ_FAILED to recv ''.
+# OpenTLS rev 14 also runs a verified context (create_default_context:
+# CERT_REQUIRED + check_hostname against S:OpenTLS/ca-bundle.pem) and a
+# settimeout() read.
 # AmiSSL rev 13: OPENSSL_init + SSL_connect; never CloseAmiSSL at exit.
-# Do not settimeout (FIONBIO).
+# Do not settimeout (FIONBIO) on AmiTLS or AmiSSL builds.
 #
 #   python27 AmigaTests/run.py ssl ssl_net
 #   python27 AmigaTests/test_ssl_net.py amiga.com
@@ -43,8 +46,9 @@ def test_00_import_ssl():
         skip("import _ssl", str(e))
         return None
     rev = getattr(_ssl, "amiga_plugin_rev", None)
-    check("_ssl.amiga_plugin_rev in (12,13)", rev in (12, 13),
-          "got %r (12=AmiTLS 13=AmiSSL; rebuild _ssl.module)" % (rev,))
+    check("_ssl.amiga_plugin_rev in (12,13,14)", rev in (12, 13, 14),
+          "got %r (12=AmiTLS 13=AmiSSL 14=OpenTLS; rebuild _ssl.module)"
+          % (rev,))
     print("    NOTE: OPENSSL_VERSION =",
           getattr(_ssl, "OPENSSL_VERSION", "?"))
     try:
@@ -204,6 +208,53 @@ def _https_context_sni_api(ssl, socket, host, timeout, hard):
     sock = None
 
 
+def _https_verified_api(ssl, socket, host, timeout, hard):
+    """OpenTLS: create_default_context (verified, check_hostname) plus a
+    socket timeout, and the decoded peer certificate."""
+    sock = None
+    sslobj = None
+    t0 = time.time()
+    label = "verified SSLContext GET https://%s/" % host
+    try:
+        print("    ---- %s (verified, timeout %.0fs) ----" % (host, timeout))
+        sys.stdout.flush()
+        ctx = ssl.create_default_context()
+        sock = socket.create_connection((host, 443), timeout)
+        sslobj = ctx.wrap_socket(sock, server_hostname=host)
+        cert = sslobj.getpeercert()
+        print("    subject:", dict(x[0] for x in cert.get("subject", ())))
+        print("    subjectAltName: %d names" % len(
+            cert.get("subjectAltName", ())))
+        print("    notAfter:", cert.get("notAfter"))
+        if hard:
+            check("getpeercert has subjectAltName",
+                  len(cert.get("subjectAltName", ())) > 0, repr(cert)[:80])
+        req = (
+            "GET / HTTP/1.0\r\n"
+            "Host: %s\r\n"
+            "\r\n"
+        ) % host
+        sslobj.sendall(req)
+        body, first = _read_http_status(sslobj, socket, t0, timeout)
+        print("    status:", first, "|", sslobj.version(), sslobj.cipher())
+        sys.stdout.flush()
+        ok = _http_ok(first)
+        if hard:
+            check(label, ok, "prefix=%r" % (body[:48],))
+        elif not ok:
+            print("    NOTE: optional host weak response:", repr(first[:48]))
+    except Exception, e:
+        dt = time.time() - t0
+        if hard:
+            check(label, False, "%s after %.2fs" % (str(e), dt))
+        else:
+            print("    NOTE: optional host failed: %s after %.2fs" % (
+                str(e), dt))
+        sys.stdout.flush()
+    sslobj = None
+    sock = None
+
+
 def test_01_https_get():
     try:
         import ssl as sslmod
@@ -222,6 +273,8 @@ def test_01_https_get():
         _https_wrap_socket_api(sslmod, socketmod, HOSTS[i], TIMEOUT, hard)
         # SNI path: hard only for first host (same suite budget).
         _https_context_sni_api(sslmod, socketmod, HOSTS[i], TIMEOUT, hard)
+        if getattr(sslmod._ssl, "amiga_tls_backend", None) == "opentls":
+            _https_verified_api(sslmod, socketmod, HOSTS[i], TIMEOUT, hard)
         i = i + 1
 
 
