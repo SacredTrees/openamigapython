@@ -86,10 +86,9 @@ and pyconfig.h defines for the VBCC build.
 `_socket` and `_ssl` are not linked into python27: they are LoadSeg
 plugins (`lib/lib-dynload/_socket.module`, `_ssl.module`). `_socket`
 opens bsdsocket via PosixLib on first import. `_ssl` opens
-opentls.library (the default build, `-Iopentlsinclude:`), amitls.library
-(`-Iamitlsinclude:`) or AmiSSL 5 (`amisslmaster.library`,
-`-Isslinclude:`) the same way; Assign the include directory rather than
-hardcoding an SDK tree. BUILD.md lists the switches. Rebuild **python27 and every `.module`** together (ABI v6).
+opentls.library (built with `-Iopentlsinclude:`) the same way; Assign the
+include directory rather than hardcoding an SDK tree. (The AmiTLS and
+AmiSSL builds were removed on 19 October 2026.) Rebuild **python27 and every `.module`** together (the plugin ABI, Include/pyamiga_plugin.h).
 
 
 Native C LoadSeg plugins

@@ -213,7 +213,7 @@ These are the important gaps relative to a full CPython 2.7:
 
 **C extensions typically absent or not shipping as builtins**
 
-- `_ssl` is a **LoadSeg plugin** (`lib/lib-dynload/_ssl.module`), OpenTLS-backed (`opentls.library`); AmiTLS and AmiSSL are compiled only as alternates and are not the release default
+- `_ssl` is a **LoadSeg plugin** (`lib/lib-dynload/_ssl.module`), on OpenTLS (`opentls.library`); the AmiTLS and AmiSSL backends were removed on 19 October 2026
 - `_ctypes`, `_sqlite3`, `_multiprocessing`, `_tkinter`, `_bsddb`, `_hotshot` / `_lsprof` profilers
 - `mmap`, `bz2`, `audioop`, `parser` (pgen), and many other optional Unix modules
 
@@ -289,7 +289,7 @@ So plugins are for **optional, heavy, late-opened** libraries (`bsdsocket.librar
 
 ### Which TLS library does the ssl module use?
 
-OpenTLS (`opentls.library`, with `opencrypto.library`) by default: the AmigaChrome Team's TLS client, BearSSL with its maths in OpenCrypto, which AmigaChrome runs on its x86 or ARM64 cores and a real Amiga runs as 68k code. It gives `ssl.py` SNI, ALPN, real `cipher()` / `version()` answers, and `getpeercert()` with `subjectAltName`, so `ssl.match_hostname` works. AmiTLS and AmiSSL remain build configuration flags in the `_ssl` module (see BUILD.md); the AmiSSL build does not pass the unit tests.
+OpenTLS (`opentls.library`, with `opencrypto.library`): the AmigaChrome Team's TLS client, BearSSL with its maths in OpenCrypto, which AmigaChrome runs on its x86 or ARM64 cores and a real Amiga runs as 68k code. It gives `ssl.py` SNI, ALPN, real `cipher()` / `version()` answers, and `getpeercert()` with `subjectAltName`, so `ssl.match_hostname` works. It is the only backend: the AmiTLS and AmiSSL ones were removed on 19 October 2026, when the AmigaChrome Team moved its programs to OpenTLS.
 
 ### Why does AmigaPython only support bsdsocket.library?
 
@@ -357,13 +357,13 @@ Install `crc.library` 2+ (LIBS:) when you want `hashlib`. It is optional for run
 
 ### How does this relate to the AmigaPython 2.0 and earlier releases found on Aminet?
 
-This tree is the direct continuation of the Irmen de Jong AmigaPython port: same Amiga-first spirit, updated to the **2.7.18** language version, with all-new bsdsocket.library and AmiTLS support, and many more new features. Irmen's Aminet packages (through Python 2.0) are the historical baseline. Sources and notes from that era live in the project repository's `archive/` directory. 
+This tree is the direct continuation of the Irmen de Jong AmigaPython port: same Amiga-first spirit, updated to the **2.7.18** language version, with all-new bsdsocket.library and TLS support (OpenTLS; AmiTLS before 19 October 2026), and many more new features. Irmen's Aminet packages (through Python 2.0) are the historical baseline. Sources and notes from that era live in the project repository's `archive/` directory. 
 
 Historic package notes: [Aminet Python20](https://www.aminet.net/package/dev/lang/Python20). Contact details in that era readme are obsolete - use the contacts below.
 
 ### What AmigaOS versions does it target?
 
-Built and tested with **NDK 3.2** / ToolKit expectations for AmigaOS 3.x. Networking expects a **bsdsocket.library** stack (Roadshow, UAE net, etc.) to be able to use socket module, and **OpenTLS** (`opentls.library` and `opencrypto.library`) for the ssl module; AmiTLS remains a build option, and AmiSSL support is currently too unstable and is not enabled in the release build. _hashlib functions depend on crc.library also from amigazen project.
+Built and tested with **NDK 3.2** / ToolKit expectations for AmigaOS 3.x. Networking expects a **bsdsocket.library** stack (Roadshow, UAE net, etc.) to be able to use socket module, and **OpenTLS** (`opentls.library` and `opencrypto.library`) for the ssl module. _hashlib functions depend on crc.library also from amigazen project.
 
 ### Will there be Python 3 / modern CPython on classic Amiga?
 
