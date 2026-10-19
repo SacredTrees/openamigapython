@@ -1,9 +1,7 @@
 /*
  * _ssl.module entry — LoadSeg plugin owning sslmodule.o.
  *
- * Default backend is opentls.library (PYAMIGA_USE_OPENTLS); amitls.library
- * is PYAMIGA_USE_AMITLS. AmiSSL is the #else branch in sslmodule.c
- * (SSL_CFLAGS_AMISSL / sslinclude:).
+ * The backend is opentls.library (Modules/sslmodule_opentls.c).
  *
  * Layout matches FastForward extheader: PyAmigaModuleInfo is the first
  * linked object (security word + ID), then entry(host) installs the
@@ -34,7 +32,7 @@ ssl_plugin_entry(struct PyHost *host)
                                  "_ssl host ensure_bsdsocket is NULL");
         return;
     }
-    /* OpenTLS/AmiTLS/AmiSSL use the SocketBase PosixLib opened for _socket. */
+    /* OpenTLS uses the SocketBase PosixLib opened for _socket. */
     if (host->fn_ensure_bsdsocket() != 0)
         return;
     init_ssl();
