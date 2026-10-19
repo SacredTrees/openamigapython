@@ -2029,18 +2029,21 @@ load_verify_locations(PySSLContext *self, PyObject *args, PyObject *kwds)
                         "ENVARC:OpenTLS/certs/ or pass cafile");
         return NULL;
     }
-    /* Remembered for a rebuilt context, and added now to a built one. */
+    /* Added now, as CPython does: a file that cannot be read fails here,
+     * and cert_store_stats() counts what was loaded. Remembered too, for
+     * a context remade after the protocol or options change. */
+    if (ctx_build(self) < 0)
+        return NULL;
     if (cafile != NULL) {
-        if (ctx_remember(&self->cafiles, cafile) < 0)
+        if (ctx_add_file(self, PyString_AsString(cafile), 0) < 0)
             return NULL;
-        if (self->ctx != NULL
-            && ctx_add_file(self, PyString_AsString(cafile), 0) < 0)
+        if (ctx_remember(&self->cafiles, cafile) < 0)
             return NULL;
     }
     if (cadata != NULL) {
-        if (ctx_remember(&self->cadata, cadata) < 0)
+        if (ctx_add_pem(self, cadata) < 0)
             return NULL;
-        if (self->ctx != NULL && ctx_add_pem(self, cadata) < 0)
+        if (ctx_remember(&self->cadata, cadata) < 0)
             return NULL;
     }
     Py_INCREF(Py_None);
