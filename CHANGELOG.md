@@ -13,7 +13,12 @@ Baseline for amigazen project work is the classic **AmigaPython 2.0** tree
 
 ## [Unreleased]
 
+---
+
+## [2.7.18-ac3] - 2026-10-19
+
 Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests).
+The ac3-classic line, built with VBCC 0.9i pre and PosixLib; `_ssl` is OpenTLS only.
 
 ### Removed
 
@@ -21,7 +26,7 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 
 ### Added
 
-- `_ssl` OpenTLS backend (`Modules/sslmodule_opentls.c`, `-DPYAMIGA_USE_OPENTLS`, headers via `opentlsinclude:`), now the default `_ssl.module` build: `opentls.library` API version 1 with SNI, ALPN, `cipher()` / `version()` from the connection, `getpeercert()` decoded from the certificate's DER (subject, issuer, dates, `subjectAltName`), CPython's empty trust store until `load_default_certs()`, and socket timeouts and Ctrl-C honoured through non-blocking I/O; `_ssl.amiga_tls_backend`, `opentls_lib_version`, `opentls_accelerated`; AmiTLS stays selectable with `SSL_CFLAGS_AMITLS`
+- `_ssl` OpenTLS backend (`Modules/sslmodule_opentls.c`, `-DPYAMIGA_USE_OPENTLS`, headers via `opentlsinclude:`), now the default `_ssl.module` build: `opentls.library` API version 1 with SNI, ALPN, `cipher()` / `version()` from the connection, `getpeercert()` decoded from the certificate's DER (subject, issuer, dates, `subjectAltName`), CPython's empty trust store until `load_default_certs()`, and socket timeouts and Ctrl-C honoured through non-blocking I/O; `_ssl.amiga_tls_backend`, `opentls_lib_version`, `opentls_accelerated`; AmiTLS stayed selectable with `SSL_CFLAGS_AMITLS` until it was removed (Removed, above)
 - OpenAmigaPython `ac2` distribution identity while retaining CPython ABI/version compatibility at 2.7.18
 - Reproducible stdlib ZIP ordering and timestamps, plus a host-side release builder that emits a file manifest and `SHA256SUMS`
 - Self-contained, versioned OpenUp Part generation with managed `Python:` and command-path startup entries
@@ -42,6 +47,8 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 
 ### Changed
 
+- The OpenUp Part from `Tools/release/build_release.py` no longer says `needs AmigaChrome` (19 October 2026), so OpenUp installs it on any Amiga, not only on AmigaChrome instances. It says in comments what it needs: a 68020 or later and no FPU (the interpreter and both plugins are built `-cpu=68020 -fpu=soft`), `opentls.library` and `opencrypto.library` for `import ssl`, and a `bsdsocket.library` for `import socket`
+- `.gitignore`: `Source/lib/` (the plugins and `python27.zip` that `build_release.py` reads) and the `opentlsinclude:` assign, so a release is built from a clean tree without `--allow-dirty`
 - Default `make -f vmakefile` links **Python27** (standard) and **SlimPython** (slim, named after SlimPython 1.5.2) plus **Python27_Debug**; `config.c` / `getcompiler.c` are compiled twice so both share the other objects
 - `dynload_amiga.c`: scan for module ID preceded by security word (FastForward `ff_loader` pattern)
 - Plugin build: `-nostdlib`, no `-lposix`/`-lvc` in the `.module` (shared `SocketBase`/`__fdesc` via host)

@@ -184,6 +184,10 @@ amigapythonamitcp.lib
 /Source/vincludeos3:
 /Source/include:
 /Source/netinclude:
+/Source/opentlsinclude:
+# build-linux-vbcc.sh plugins (lib-dynload/*.module) and mkpythonzip.py
+# (python27.zip): build_release.py's inputs, so a release builds from a clean tree
+/Source/lib/
 /build-support/
 /dist/
 /vbcc_PosixLib.lha

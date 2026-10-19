@@ -61,7 +61,11 @@ class ReleaseToolsTest(unittest.TestCase):
             )
             text = (part_dir / "Part").read_text(encoding="latin-1")
             self.assertIn("part OpenAmigaPython 2.7.18-ac2", text)
-            self.assertIn("needs AmigaChrome", text)
+            # any Amiga: no "needs" line (OpenUp would skip it off AmigaChrome)
+            self.assertFalse(any(line.startswith("needs")
+                                 for line in text.splitlines()))
+            self.assertIn("68020 or later; no FPU", text)
+            self.assertIn("opentls.library", text)
             self.assertLess(text.index('"Payload/a"'), text.index('"Payload/z"'))
             self.assertIn(
                 '"SYS:Tools/OpenAmigaPython/2.7.18-ac2/a"', text
