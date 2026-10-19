@@ -50,9 +50,9 @@ ALWAYS_BUILTIN = (
 
 # Linked only for BUILD=standard (see Modules/config.c).
 EXTRA_BUILTIN = (
-    "md5",
+    "_md5",
     "cmath",
-    "sha",
+    "_sha",
     "_hashlib",
     "datetime",
     "_bisect",

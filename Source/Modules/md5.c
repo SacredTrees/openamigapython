@@ -51,9 +51,18 @@
   1999-05-03 lpd Original version.
  */
 
+#include "pyconfig.h"    /* WORDS_BIGENDIAN */
 #include "md5.h"
 #include <string.h>
 #include <limits.h>
+
+/* Say the byte order outright where it is known.  Left to the run-time
+   test in md5_process(), VBCC folds that test with the byte order of the
+   machine it runs on: cross-compiled on x86 for the 68k, md5 took the
+   little-endian path and every digest was wrong. */
+#if !defined(ARCH_IS_BIG_ENDIAN) && defined(WORDS_BIGENDIAN)
+#  define ARCH_IS_BIG_ENDIAN 1
+#endif
 
 #undef BYTE_ORDER       /* 1 = big-endian, -1 = little-endian, 0 = unknown */
 #ifdef ARCH_IS_BIG_ENDIAN

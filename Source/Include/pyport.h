@@ -1021,4 +1021,21 @@ typedef struct fd_set {
 #define Py_ULL(x) Py_LL(x##U)
 #endif
 
+/* Py_VAR_ARRAY is the size given to the last member of a variable-size
+ * object, such as a string's ob_sval or a tuple's ob_item.  CPython
+ * declares these [1] and allocates the room it needs past the end.
+ *
+ * VBCC works out the index into an array that it knows to be smaller than
+ * 64 KiB in 16 bits, at any optimisation level.  With [1], a string of
+ * 64 KiB or more got its NUL at ob_sval[size % 65536], over its own data,
+ * and a tuple of 16384 items or more used the wrong slots.  VBCC indexes a
+ * C99 flexible array member in 32 bits, so under VBCC these are flexible.
+ * offsetof(type, member), not sizeof(type), gives where the array starts.
+ */
+#ifdef __VBCC__
+#define Py_VAR_ARRAY
+#else
+#define Py_VAR_ARRAY 1
+#endif
+
 #endif /* Py_PYPORT_H */

@@ -2,6 +2,7 @@
 /* Tuple object implementation */
 
 #include "Python.h"
+#include <stddef.h>             /* offsetof */
 
 /* Speed optimization to avoid frequent malloc/free of small tuples */
 #ifndef PyTuple_MAXSAVESIZE
@@ -783,7 +784,7 @@ static PyObject *tuple_iter(PyObject *seq);
 PyTypeObject PyTuple_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
     "tuple",
-    sizeof(PyTupleObject) - sizeof(PyObject *),
+    offsetof(PyTupleObject, ob_item),           /* Py_VAR_ARRAY */
     sizeof(PyObject *),
     (destructor)tupledealloc,                   /* tp_dealloc */
     (printfunc)tupleprint,                      /* tp_print */
