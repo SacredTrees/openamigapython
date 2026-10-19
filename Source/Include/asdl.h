@@ -19,12 +19,12 @@ typedef enum {false, true} bool;
 
 typedef struct {
     int size;
-    void *elements[1];
+    void *elements[Py_VAR_ARRAY];
 } asdl_seq;
 
 typedef struct {
     int size;
-    int elements[1];
+    int elements[Py_VAR_ARRAY];
 } asdl_int_seq;
 
 asdl_seq *asdl_seq_new(int size, PyArena *arena);
