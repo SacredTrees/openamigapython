@@ -47,19 +47,13 @@ __all__ = __always_supported + ('new', 'algorithms_guaranteed',
 
 
 def __get_builtin_constructor(name):
-    # Fallback when _hashlib is missing: Amiga inittab uses "md5" / "sha".
+    # Without _hashlib (crc.library 2): the built-in _md5 and _sha.
     try:
         if name in ('SHA1', 'sha1'):
-            try:
-                import _sha
-            except ImportError:
-                import sha as _sha
+            import _sha
             return _sha.new
         elif name in ('MD5', 'md5'):
-            try:
-                import _md5
-            except ImportError:
-                import md5 as _md5
+            import _md5
             return _md5.new
         elif name in ('SHA256', 'sha256', 'SHA224', 'sha224'):
             import _sha256

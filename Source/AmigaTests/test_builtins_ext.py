@@ -165,17 +165,25 @@ MD5_RFC1321 = (
 
 
 def test_hash_zlib():
-    md5 = require_import("md5")
+    # The C modules are _md5 and _sha, as in CPython; md5 and sha are
+    # Lib's wrappers round hashlib.
+    md5 = require_import("_md5")
     if md5:
         h = md5.new("abc").hexdigest()
-        check("md5", h == "900150983cd24fb0d6963f7d28e17f72", h)
+        check("_md5", h == "900150983cd24fb0d6963f7d28e17f72", h)
         for data, want in MD5_RFC1321:
             h = md5.new(data).hexdigest()
-            check("md5 of %d bytes (RFC 1321)" % len(data), h == want, h)
-    sha = require_import("sha")
+            check("_md5 of %d bytes (RFC 1321)" % len(data), h == want, h)
+    sha = require_import("_sha")
     if sha:
         h = sha.new("abc").hexdigest()
-        check("sha", h == "a9993e364706816aba3e25717850c26c9cd0d89d", h)
+        check("_sha", h == "a9993e364706816aba3e25717850c26c9cd0d89d", h)
+    for name, want in (("md5", "900150983cd24fb0d6963f7d28e17f72"),
+                       ("sha", "a9993e364706816aba3e25717850c26c9cd0d89d")):
+        mod = require_import(name)
+        if mod:
+            h = mod.new("abc").hexdigest()
+            check(name + " (Lib wrapper)", h == want, h)
     zlib = require_import("zlib")
     if zlib:
         raw = "hello" * 50
@@ -372,9 +380,10 @@ def test_hashlib_crc():
     check("hashlib.new",
           hl.new("sha1", "abc").hexdigest() ==
           "a9993e364706816aba3e25717850c26c9cd0d89d")
-    # crc.library does not provide sha224/384/512
-    check("hashlib no sha224",
-          "sha224" not in getattr(hl, "algorithms_available", ()))
+    # crc.library does not provide sha224/384/512 (elsewhere hashlib has them)
+    if getattr(sys, "platform", "") == "amiga":
+        check("hashlib no sha224",
+              "sha224" not in getattr(hl, "algorithms_available", ()))
 
 
 def test_sre_re():
