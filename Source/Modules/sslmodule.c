@@ -2,8 +2,10 @@
  * Amiga _ssl: CPython 2.7 ssl.py API for OS3.
  *
  * Built as lib/lib-dynload/_ssl.module (not linked into python27).
- * Default plugin build uses amitls.library (-DPYAMIGA_USE_AMITLS).
- * This file is the AmiSSL 5 / OpenSSL 3 backend (no PYAMIGA_USE_AMITLS).
+ * Default plugin build uses opentls.library (-DPYAMIGA_USE_OPENTLS,
+ * sslmodule_opentls.c); amitls.library is -DPYAMIGA_USE_AMITLS
+ * (sslmodule_amitls.c). This file is the AmiSSL 5 / OpenSSL 3 backend
+ * (neither defined).
  *
  * Socket I/O uses host psockets (posix sock_fd over AmiTCP). SSL_set_fd
  * gets the AmiTCP id via PyHost->fn_socket_native_fd. FIONBIO uses host
@@ -25,7 +27,9 @@
  *
  * C89 / ANSI; plugin FAR data; no AmiSSL autoinit CRT.
  */
-#ifdef PYAMIGA_USE_AMITLS
+#if defined(PYAMIGA_USE_OPENTLS)
+#include "sslmodule_opentls.c"
+#elif defined(PYAMIGA_USE_AMITLS)
 #include "sslmodule_amitls.c"
 #else
 #include "Python.h"
@@ -2618,4 +2622,4 @@ init_ssl(void)
     }
     PyModule_AddIntConstant(m, "amiga_plugin_rev", 13);
 }
-#endif /* !PYAMIGA_USE_AMITLS */
+#endif /* !PYAMIGA_USE_OPENTLS && !PYAMIGA_USE_AMITLS */

@@ -1,5 +1,5 @@
 /*
- * Fill the process-global PyHost for Amiga LoadSeg plugins (ABI v8).
+ * Fill the process-global PyHost for Amiga LoadSeg plugins (ABI v9).
  * Socket syscalls are a posix fd table over AmiTCP LVOs (unix.lib2
  * psockets: POSIX socket() in _socket, bsdsocket underneath). sock_fd is
  * never 0/1/2 so it cannot alias stdin/stdout. AmiTLS uses
@@ -66,24 +66,14 @@ extern struct DosLibrary *DOSBase;
 static struct PyHost pyamiga_host;
 
 /*
- * Host is +aos68k_posix (no -sd). VBCC __saveds cannot reload the CRT A4
- * PosixLib uses for SocketBase. Capture host A4 in InitHost and
- * load it on every trampoline entry.
- *
- * Do NOT restore the caller's A4 on exit: the plugin is FARONLY (no near
- * data) but still links -lmieee soft-float, which needs the host A4. Leaving
- * the plugin's A4 in place after socket() hung in init_sockobject's double
- * assignment (defaulttimeout).
+ * A4 is an ordinary callee-saved register here: the host is +aos68k_posix
+ * without -sd (vc.lib, amiga.lib, PosixLib's posix.lib: large data;
+ * PosixLib reaches SocketBase by absolute address), and the plugins link
+ * no soft-float library. The trampolines leave A4 alone. Loading a saved
+ * "host A4" on entry, as before ABI v9, clobbered the plugin's A4: VBCC
+ * keeps locals there (the OpenTLS _ssl read result became a pointer, and
+ * _PyString_Resize raised MemoryError).
  */
-static APTR pyamiga_host_a4;
-
-/* VBCC register stubs (same style as Amiga/syslog.c LVO stubs).
- * Do not append rts — vbcc already emits one after the string body. */
-static APTR pyamiga_get_a4(void)
-    = "\tmove.l\ta4,d0";
-
-static void pyamiga_set_a4(__reg("d0") APTR v)
-    = "\tmove.l\td0,a4";
 
 /*
  * AmiTCP LVOs (netinclude/inline/bsdsocket_protos.h).
@@ -302,7 +292,6 @@ pyamiga_ensure_bsdsocket(void)
     APTR oldwin;
     int rc;
 
-    pyamiga_set_a4(pyamiga_host_a4);
 
     if (SocketBase != NULL) {
         pyamiga_host.ptr_SocketBase = (void *)SocketBase;
@@ -337,7 +326,6 @@ pyamiga_InitModule3(char *name, PyMethodDef *methods, char *doc)
 {
     PyObject *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = Py_InitModule3(name, methods, doc);
     return res;
 }
@@ -348,7 +336,6 @@ pyamiga_ioctl(int fd, unsigned long request, char *arg)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(fd);
@@ -363,7 +350,6 @@ pyamiga_fcntl(int fd, int cmd, int arg)
 {
     int rc;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     rc = fcntl(fd, cmd, arg);
     return rc;
 }
@@ -379,7 +365,6 @@ pyamiga_socket(int domain, int type, int protocol)
     LONG fd2;
     int pfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     rc = amitcp_lvo_socket(SocketBase, (LONG)domain, (LONG)type,
@@ -412,7 +397,6 @@ pyamiga_bind(int s, const struct sockaddr *addr, socklen_t len)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -428,7 +412,6 @@ pyamiga_listen(int s, int backlog)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -445,7 +428,6 @@ pyamiga_accept(int s, struct sockaddr *addr, socklen_t *len)
     LONG nfd;
     int pfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -469,7 +451,6 @@ pyamiga_connect(int s, const struct sockaddr *addr, socklen_t len)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -485,7 +466,6 @@ pyamiga_shutdown(int s, int how)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -500,7 +480,6 @@ pyamiga_close(int fd)
 {
     int rc;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     rc = close(fd);
     return rc;
 }
@@ -511,7 +490,6 @@ pyamiga_closesocket(int s)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_take(s);
@@ -537,7 +515,6 @@ pyamiga_select(int nfds, fd_set *rd, fd_set *wr, fd_set *ex,
     LONG rc;
     ULONG ticks;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     maxn = 0;
@@ -599,7 +576,6 @@ pyamiga_recv(int s, void *buf, size_t len, int flags)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -615,7 +591,6 @@ pyamiga_send(int s, const void *buf, size_t len, int flags)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -632,7 +607,6 @@ pyamiga_recvfrom(int s, void *buf, size_t len, int flags,
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -650,7 +624,6 @@ pyamiga_sendto(int s, const void *buf, size_t len, int flags,
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -668,7 +641,6 @@ pyamiga_setsockopt(int s, int level, int optname, const void *optval,
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -686,7 +658,6 @@ pyamiga_getsockopt(int s, int level, int optname, void *optval,
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -703,7 +674,6 @@ pyamiga_getsockname(int s, struct sockaddr *addr, socklen_t *len)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -719,7 +689,6 @@ pyamiga_getpeername(int s, struct sockaddr *addr, socklen_t *len)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok())
         return -1;
     nfd = pysock_require(s);
@@ -734,7 +703,6 @@ pyamiga_gethostname(char *name, size_t len)
 {
     int rc;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     rc = gethostname(name, len);
     return rc;
 }
@@ -744,7 +712,6 @@ pyamiga_gethostbyname(const char *name)
 {
     struct hostent *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = gethostbyname(name);
     return res;
 }
@@ -754,7 +721,6 @@ pyamiga_gethostbyaddr(const void *addr, socklen_t len, int type)
 {
     struct hostent *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = gethostbyaddr(addr, len, type);
     return res;
 }
@@ -764,7 +730,6 @@ pyamiga_getservbyname(const char *name, const char *proto)
 {
     struct servent *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = getservbyname(name, proto);
     return res;
 }
@@ -774,7 +739,6 @@ pyamiga_getservbyport(int port, const char *proto)
 {
     struct servent *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = getservbyport(port, proto);
     return res;
 }
@@ -784,7 +748,6 @@ pyamiga_getprotobyname(const char *name)
 {
     struct protoent *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = getprotobyname(name);
     return res;
 }
@@ -794,7 +757,6 @@ pyamiga_inet_addr(const char *cp)
 {
     unsigned long res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = inet_addr(cp);
     return res;
 }
@@ -804,7 +766,6 @@ pyamiga_inet_ntoa(struct in_addr in)
 {
     char *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = inet_ntoa(in);
     return res;
 }
@@ -814,7 +775,6 @@ pyamiga_htons(unsigned short hostshort)
 {
     unsigned short res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = htons(hostshort);
     return res;
 }
@@ -824,7 +784,6 @@ pyamiga_htonl(unsigned long hostlong)
 {
     unsigned long res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = htonl(hostlong);
     return res;
 }
@@ -834,7 +793,6 @@ pyamiga_ntohs(unsigned short netshort)
 {
     unsigned short res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = ntohs(netshort);
     return res;
 }
@@ -844,7 +802,6 @@ pyamiga_ntohl(unsigned long netlong)
 {
     unsigned long res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = ntohl(netlong);
     return res;
 }
@@ -854,7 +811,6 @@ pyamiga_dup(int fd)
 {
     int rc;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     rc = dup(fd);
     return rc;
 }
@@ -864,7 +820,6 @@ pyamiga_fdopen(int fd, const char *mode)
 {
     FILE *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = fdopen(fd, mode);
     return res;
 }
@@ -874,7 +829,6 @@ pyamiga_fclose(FILE *fp)
 {
     int rc;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     rc = fclose(fp);
     return rc;
 }
@@ -884,7 +838,6 @@ pyamiga_strerror(int errnum)
 {
     char *res;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     res = strerror(errnum);
     return res;
 }
@@ -892,7 +845,6 @@ pyamiga_strerror(int errnum)
 static void
 pyamiga_note(const char *msg)
 {
-    pyamiga_set_a4(pyamiga_host_a4);
     printf("  NOTE: %s\n", msg ? msg : "(null)");
     fflush(stdout);
 }
@@ -902,7 +854,6 @@ pyamiga_sock_timeout_from_arg(PyObject *arg, void *bits8, int *block)
 {
     double timeout;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (arg == Py_None)
         timeout = -1.0;
     else {
@@ -927,7 +878,6 @@ pyamiga_sock_timeout_to_obj(const void *bits8)
 {
     double timeout;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     memcpy(&timeout, bits8, sizeof(double));
     if (timeout < 0.0) {
         Py_INCREF(Py_None);
@@ -941,7 +891,6 @@ pyamiga_sock_timeout_cmp0(const void *bits8)
 {
     double timeout;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     memcpy(&timeout, bits8, sizeof(double));
     if (timeout < 0.0)
         return -1;
@@ -955,7 +904,6 @@ pyamiga_sock_timeout_to_tv(const void *bits8, struct timeval *tv)
 {
     double timeout;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     memcpy(&timeout, bits8, sizeof(double));
     tv->tv_sec = (long)timeout;
     tv->tv_usec = (long)((timeout - (double)tv->tv_sec) * 1.0e6);
@@ -967,7 +915,6 @@ pyamiga_sock_deadline_init(const void *timeout_bits, void *deadline_bits)
     double timeout;
     double deadline;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     memcpy(&timeout, timeout_bits, sizeof(double));
     deadline = _PyTime_FloatTime() + timeout;
     memcpy(deadline_bits, &deadline, sizeof(double));
@@ -979,7 +926,6 @@ pyamiga_sock_deadline_remaining(const void *deadline_bits, void *interval_bits)
     double deadline;
     double interval;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     memcpy(&deadline, deadline_bits, sizeof(double));
     interval = deadline - _PyTime_FloatTime();
     memcpy(interval_bits, &interval, sizeof(double));
@@ -999,7 +945,6 @@ pyamiga_sock_select1(int fd, int writing, const void *timeout_bits)
     int n;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     memcpy(&timeout, timeout_bits, sizeof(double));
     if (timeout < 0.0)
         return 1;
@@ -1049,7 +994,6 @@ pyamiga_sock_recv(int fd, int len, int flags, const void *timeout_bits,
     LONG nfd;
     PyObject *result;
 
-    pyamiga_set_a4(pyamiga_host_a4);
 
     if (timed_out != NULL)
         *timed_out = 0;
@@ -1129,7 +1073,6 @@ pyamiga_sock_send(int fd, PyObject *data, int flags,
     int sel;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
 
     if (timed_out != NULL)
         *timed_out = 0;
@@ -1193,7 +1136,6 @@ pyamiga_socket_native_fd(int fd)
 {
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     nfd = pysock_to_native(fd);
     return (int)nfd;
 }
@@ -1205,7 +1147,6 @@ pyamiga_socket_set_nbio(int fd, int nonblock)
     LONG rc;
     LONG nfd;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     if (!pyamiga_amitcp_ok() || fd < 0)
         return -1;
     nfd = pysock_require(fd);
@@ -1219,9 +1160,18 @@ pyamiga_socket_set_nbio(int fd, int nonblock)
 static void
 pyamiga_object_gc_untrack(PyObject *op)
 {
-    pyamiga_set_a4(pyamiga_host_a4);
     if (op != NULL && PyObject_IS_GC(op))
         PyObject_GC_UnTrack(op);
+}
+
+static PyObject *
+pyamiga_PyUnicode_AsEncodedString(PyObject *u, const char *encoding,
+                                  const char *errors)
+{
+    PyObject *r;
+
+    r = PyUnicode_AsEncodedString(u, encoding, errors);
+    return r;
 }
 
 static void *
@@ -1229,7 +1179,6 @@ pyamiga_PyCapsule_Import(const char *name, int no_block)
 {
     void *p;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     p = PyCapsule_Import(name, no_block);
     return p;
 }
@@ -1239,7 +1188,6 @@ pyamiga__PyObject_New(PyTypeObject *t)
 {
     PyObject *r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = _PyObject_New(t);
     return r;
 }
@@ -1247,7 +1195,6 @@ pyamiga__PyObject_New(PyTypeObject *t)
 static void
 pyamiga_object_dealloc(PyObject *op)
 {
-    pyamiga_set_a4(pyamiga_host_a4);
     if (PyObject_IS_GC(op)) {
         PyObject_GC_UnTrack(op);
         PyObject_GC_Del(op);
@@ -1261,7 +1208,6 @@ pyamiga_PyDict_New(void)
 {
     PyObject *r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyDict_New();
     return r;
 }
@@ -1271,7 +1217,6 @@ pyamiga_PyDict_SetItemString(PyObject *d, const char *k, PyObject *v)
 {
     int r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyDict_SetItemString(d, k, v);
     return r;
 }
@@ -1281,7 +1226,6 @@ pyamiga_PyBool_FromLong(long v)
 {
     PyObject *r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyBool_FromLong(v);
     return r;
 }
@@ -1291,7 +1235,6 @@ pyamiga_PyObject_IsTrue(PyObject *o)
 {
     int r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyObject_IsTrue(o);
     return r;
 }
@@ -1301,7 +1244,6 @@ pyamiga_PyString_Size(PyObject *o)
 {
     Py_ssize_t r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyString_Size(o);
     return r;
 }
@@ -1311,7 +1253,6 @@ pyamiga_PyModule_GetDict(PyObject *m)
 {
     PyObject *r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyModule_GetDict(m);
     return r;
 }
@@ -1321,7 +1262,6 @@ pyamiga_PyObject_GetAttrString(PyObject *o, const char *n)
 {
     PyObject *r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyObject_GetAttrString(o, n);
     return r;
 }
@@ -1331,7 +1271,6 @@ pyamiga_PyObject_SetAttrString(PyObject *o, const char *n, PyObject *v)
 {
     int r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyObject_SetAttrString(o, n, v);
     return r;
 }
@@ -1341,7 +1280,6 @@ pyamiga_PyObject_AsWriteBuffer(PyObject *o, void **buf, Py_ssize_t *len)
 {
     int r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     r = PyObject_AsWriteBuffer(o, buf, len);
     return r;
 }
@@ -1358,7 +1296,6 @@ pyamiga_PyArg_VaParse(PyObject *args, const char *format, va_list va)
     PyObject *tuple;
     int r;
 
-    pyamiga_set_a4(pyamiga_host_a4);
     tuple = NULL;
     if (args != NULL && !PyTuple_Check(args)) {
         tuple = PyTuple_Pack(1, args);
@@ -1383,8 +1320,6 @@ PyAmiga_InitHost(void)
 {
     struct PyHost *h;
 
-    /* Capture CRT A4 while still in the host image. */
-    pyamiga_host_a4 = pyamiga_get_a4();
     pysock_init();
 
     h = &pyamiga_host;
@@ -1550,4 +1485,5 @@ PyAmiga_InitHost(void)
     h->fn_object_dealloc = pyamiga_object_dealloc;
     h->fn_socket_set_nbio = pyamiga_socket_set_nbio;
     h->fn_object_gc_untrack = pyamiga_object_gc_untrack;
+    h->fn_PyUnicode_AsEncodedString = pyamiga_PyUnicode_AsEncodedString;
 }

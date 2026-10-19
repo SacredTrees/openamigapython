@@ -93,7 +93,7 @@ def write_metadata(drawer, version, revision):
         "schema": 1,
         "name": "OpenAmigaPython",
         "version": version["version"],
-        "python_abi": "cp27-pyamiga8",
+        "python_abi": "cp27-pyamiga9",
         "platform": "amigaos3_m68k_68020_softfloat",
         "source_commit": revision,
         "files": entries,

@@ -5,10 +5,10 @@ project_root=$(cd "$(dirname "$0")/../.." && pwd)
 build_target=${1:-standard}
 
 case "$build_target" in
-    standard|debug)
+    standard|debug|plugins)
         ;;
     *)
-        echo "usage: $0 [standard|debug]" >&2
+        echo "usage: $0 [standard|debug|plugins]" >&2
         exit 2
         ;;
 esac
@@ -18,6 +18,8 @@ toolchain=${AMIGAPYTHON_TOOLCHAIN:-/home/da1ek/ACNet-compat-lab/toolchain/amiga}
 posix_dir=${AMIGAPYTHON_POSIXLIB:-$project_root/PosixLib}
 ndk_include=${AMIGAPYTHON_NDK_INCLUDE:-/home/da1ek/AmigaChrome/stoves/os32/ndk/Include_H}
 net_include=${AMIGAPYTHON_NET_INCLUDE:-/home/da1ek/AmigaChrome/stoves/os32/ndk/SANA+RoadshowTCP-IP/netinclude}
+# plugins: DalsinAI/openamigatls's include/ for the default OpenTLS _ssl.module
+opentls_include=${AMIGAPYTHON_OPENTLS_INCLUDE:-$project_root/../openamigatls/include}
 support_dir="$project_root/build-support/vbcc"
 config_dir="$support_dir/config"
 config_file="$config_dir/aos68k_posix"
@@ -81,6 +83,18 @@ make_args=(
 )
 
 cd "$source_dir"
+if [[ "$build_target" == plugins ]]; then
+    # lib/lib-dynload/_socket.module and _ssl.module (Modules/plugin/vmakefile)
+    if [[ ! -e "$opentls_include/inline/opentls_protos.h" ]]; then
+        echo "missing build prerequisite: $opentls_include/inline/opentls_protos.h" >&2
+        exit 1
+    fi
+    make_assign "$source_dir/opentlsinclude:" "$opentls_include"
+    make -f Modules/plugin/vmakefile "CC=$toolchain/bin/vc" "MKDIR=mkdir -p" all
+    echo "built: $source_dir/lib/lib-dynload/_socket.module"
+    echo "built: $source_dir/lib/lib-dynload/_ssl.module"
+    exit 0
+fi
 make "${make_args[@]}" "$build_target"
 
 if [[ "$build_target" == debug ]]; then

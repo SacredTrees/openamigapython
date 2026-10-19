@@ -17,6 +17,7 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 
 ### Added
 
+- `_ssl` OpenTLS backend (`Modules/sslmodule_opentls.c`, `-DPYAMIGA_USE_OPENTLS`, headers via `opentlsinclude:`), now the default `_ssl.module` build: `opentls.library` API version 1 with SNI, ALPN, `cipher()` / `version()` from the connection, `getpeercert()` decoded from the certificate's DER (subject, issuer, dates, `subjectAltName`), CPython's empty trust store until `load_default_certs()`, and socket timeouts and Ctrl-C honoured through non-blocking I/O; `_ssl.amiga_tls_backend`, `opentls_lib_version`, `opentls_accelerated`; AmiTLS stays selectable with `SSL_CFLAGS_AMITLS`
 - OpenAmigaPython `ac2` distribution identity while retaining CPython ABI/version compatibility at 2.7.18
 - Reproducible stdlib ZIP ordering and timestamps, plus a host-side release builder that emits a file manifest and `SHA256SUMS`
 - Self-contained, versioned OpenUp Part generation with managed `Python:` and command-path startup entries
@@ -31,6 +32,7 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 - Real `_ssl.module` implementing the CPython 2.7 `_ssl` API for `ssl.py`; default backend is `amitls.library` (`-DPYAMIGA_USE_AMITLS`, headers via `amitlsinclude:`); AmiSSL 5 remains an `#ifndef PYAMIGA_USE_AMITLS` branch; TLS I/O uses the AmiTCP native fd from host PosixLib `__fdesc`
 - PyHost ABI v6: `ptr_SocketBase`, `fn_socket_native_fd`, PyCapsule/dict/bool/write-buffer trampolines
 - PyHost ABI v8: `fn_socket_set_nbio` (host AmiTCP `IoctlSocket`/`FIONBIO`), `fn_object_gc_untrack`
+- PyHost ABI v9: `fn_PyUnicode_AsEncodedString`, so `_socket.module` links again with Unicode on (`getaddrinfo` with a unicode host name), and the plugin libc's own `memcmp` for the OpenTLS `_ssl.module`; the host trampolines keep the caller's A4 instead of loading a saved one, which had clobbered plugin locals (OpenTLS `read()` raised `MemoryError`, `getaddrinfo` failed with errno 4); `Tools/cross/build-linux-vbcc.sh plugins` builds both plugins on Linux
 - AmigaTests groups `ssl` / `ssl_net` (AmiTLS + optional live HTTPS GET)
 - AmigaTests coverage for `_io` / text I/O and expanded legacy Amiga cases (where present in the working tree)
 
