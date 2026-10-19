@@ -145,9 +145,9 @@ struct _inittab _PyImport_Inittab[] = {
     {"_arexx", init_arexx},
 
 #ifndef PYAMIGA_SLIM
-    {"md5", init_md5},
+    {"_md5", init_md5},
     {"cmath", initcmath},
-    {"sha", init_sha},
+    {"_sha", init_sha},
     {"_hashlib", init_hashlib},
     /* C-only in 2.7; needed by calendar/email/etc. */
     {"datetime", initdatetime},
