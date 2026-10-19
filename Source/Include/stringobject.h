@@ -38,7 +38,7 @@ typedef struct {
     PyObject_VAR_HEAD
     long ob_shash;
     int ob_sstate;
-    char ob_sval[1];
+    char ob_sval[Py_VAR_ARRAY];
 
     /* Invariants:
      *     ob_sval contains space for 'ob_size+1' elements.

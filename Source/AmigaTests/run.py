@@ -51,6 +51,7 @@ SUITE = [
     ("builtins", "AmigaTests.test_builtins_ext"),
     ("io", "AmigaTests.test_io"),
     ("tier_a", "AmigaTests.test_tier_a"),
+    ("big", "AmigaTests.test_big_objects"),
 ]
 
 # Optional groups (not in default suite):

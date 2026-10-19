@@ -1,5 +1,10 @@
 #include "Python.h"
 #include "asdl.h"
+#include <stddef.h>             /* offsetof */
+
+/* The room for a sequence of one element: sizeof(asdl_seq) where elements
+   is declared [1], but not where it is a flexible array (Py_VAR_ARRAY). */
+#define ASDL_SEQ_ONE (offsetof(asdl_seq, elements) + sizeof(void *))
 
 asdl_seq *
 asdl_seq_new(int size, PyArena *arena)
@@ -15,12 +20,12 @@ asdl_seq_new(int size, PyArena *arena)
     }
 
     /* check if size can be added safely */
-    if (n > PY_SIZE_MAX - sizeof(asdl_seq)) {
+    if (n > PY_SIZE_MAX - ASDL_SEQ_ONE) {
         PyErr_NoMemory();
         return NULL;
     }
 
-    n += sizeof(asdl_seq);
+    n += ASDL_SEQ_ONE;
 
     seq = (asdl_seq *)PyArena_Malloc(arena, n);
     if (!seq) {
@@ -46,12 +51,12 @@ asdl_int_seq_new(int size, PyArena *arena)
     }
 
     /* check if size can be added safely */
-    if (n > PY_SIZE_MAX - sizeof(asdl_seq)) {
+    if (n > PY_SIZE_MAX - ASDL_SEQ_ONE) {
         PyErr_NoMemory();
         return NULL;
     }
 
-    n += sizeof(asdl_seq);
+    n += ASDL_SEQ_ONE;
 
     seq = (asdl_int_seq *)PyArena_Malloc(arena, n);
     if (!seq) {

@@ -42,7 +42,7 @@ typedef struct {
     PyObject *weakreflist; /* List of weak references */
     /* pattern code */
     Py_ssize_t codesize;
-    SRE_CODE code[1];
+    SRE_CODE code[Py_VAR_ARRAY];
 } PatternObject;
 
 #define PatternObject_GetCode(o) (((PatternObject*)(o))->code)
