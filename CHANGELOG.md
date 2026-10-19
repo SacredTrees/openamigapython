@@ -17,7 +17,7 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 
 ### Removed
 
-- `_ssl`'s AmiTLS (`Modules/sslmodule_amitls.c`, `SSL_CFLAGS_AMITLS`) and AmiSSL (`Modules/sslmodule.c`'s OpenSSL code, `SSL_CFLAGS_AMISSL`) backends (19 October 2026): `_ssl.module` is OpenTLS only, as every AmigaChrome Team program now is
+- `_ssl`'s AmiTLS (`Modules/sslmodule_amitls.c`, `SSL_CFLAGS_AMITLS`) and AmiSSL (`Modules/sslmodule.c`'s OpenSSL code, `SSL_CFLAGS_AMISSL`) backends (19 October 2026): `_ssl.module` is OpenTLS only (Dale: AmiSSL and AmiTLS are pulled in favour of OpenTLS)
 
 ### Added
 
