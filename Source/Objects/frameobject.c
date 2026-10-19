@@ -598,8 +598,8 @@ frame_sizeof(PyFrameObject *f)
     nfrees = PyTuple_GET_SIZE(f->f_code->co_freevars);
     extras = f->f_code->co_stacksize + f->f_code->co_nlocals +
              ncells + nfrees;
-    /* subtract one as it is already included in PyFrameObject */
-    res = sizeof(PyFrameObject) + (extras-1) * sizeof(PyObject *);
+    /* offsetof, not sizeof: f_localsplus is Py_VAR_ARRAY */
+    res = offsetof(PyFrameObject, f_localsplus) + extras * sizeof(PyObject *);
 
     return PyInt_FromSsize_t(res);
 }

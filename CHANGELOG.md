@@ -53,6 +53,7 @@ Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests
 
 ### Fixed
 
+- Objects bigger than 64 KiB (19 October 2026): VBCC works out the index into an array it knows to be smaller than 64 KiB in 16 bits, and CPython's variable-size objects end in a `[1]` array. A string of 64 KiB or more had its NUL written over byte `size % 65536` of its data (so `open().read()`, `recv` joins and slices of big data each had one byte zeroed), tuples of 16384 items or more used the wrong slots, longs past about 491,000 bits gave wrong results, and big list literals and regular expressions failed to compile. Under VBCC those arrays (`ob_sval`, tuple `ob_item`, `ob_digit`, `f_localsplus`, `asdl_seq` `elements`, sre `code`) are now C99 flexible array members (`Py_VAR_ARRAY` in `Include/pyport.h`), which VBCC indexes in 32 bits; AmigaTests `big` checks it
 - `pyamiga_host.c` / `_socket.module`: host A4 for PosixLib trampolines; timeout soft-float via host (`fn_sock_timeout_*`); Amiga `HAVE_SOCKADDR_SA_LEN` + `sin_family` so DNS `gethostbyname` no longer fails with "unknown address family"
 - `libcheck.c`: stop using fake `UserGroupBase`/`UtilityBase` pointer `1` (AmiTCP LVOs through a dummy base hard-crash). Open `usergroup.library` / `utility.library` on demand; `checksocketlib()` only succeeds when PosixLib `SocketBase` is already live (gated `_socket` / `__init_bsdsocket`)
 - `crypt` / `syslog`: call usergroup/bsdsocket LVOs only after a real library open; soft-fail with `SystemError` otherwise
