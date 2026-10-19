@@ -15,6 +15,10 @@ Baseline for amigazen project work is the classic **AmigaPython 2.0** tree
 
 Work on the tree after `7689479` (VBCC / PosixLib upgrade hardening, docs, tests).
 
+### Removed
+
+- `_ssl`'s AmiTLS (`Modules/sslmodule_amitls.c`, `SSL_CFLAGS_AMITLS`) and AmiSSL (`Modules/sslmodule.c`'s OpenSSL code, `SSL_CFLAGS_AMISSL`) backends (19 October 2026): `_ssl.module` is OpenTLS only (Dale: AmiSSL and AmiTLS are pulled in favour of OpenTLS)
+
 ### Added
 
 - `_ssl` OpenTLS backend (`Modules/sslmodule_opentls.c`, `-DPYAMIGA_USE_OPENTLS`, headers via `opentlsinclude:`), now the default `_ssl.module` build: `opentls.library` API version 1 with SNI, ALPN, `cipher()` / `version()` from the connection, `getpeercert()` decoded from the certificate's DER (subject, issuer, dates, `subjectAltName`), CPython's empty trust store until `load_default_certs()`, and socket timeouts and Ctrl-C honoured through non-blocking I/O; `_ssl.amiga_tls_backend`, `opentls_lib_version`, `opentls_accelerated`; AmiTLS stays selectable with `SSL_CFLAGS_AMITLS`

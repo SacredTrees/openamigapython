@@ -1,8 +1,8 @@
 /*
  * Amiga _ssl: CPython 2.7 ssl.py API on opentls.library (API version 1).
  *
- * Selected with -DPYAMIGA_USE_OPENTLS (SSL_CFLAGS_OPENTLS in
- * Modules/plugin/vmakefile, the default). OpenTLS is the AmigaChrome
+ * The _ssl backend (Modules/sslmodule.c includes it; built by
+ * Modules/plugin/vmakefile with -DPYAMIGA_USE_OPENTLS). OpenTLS is the AmigaChrome
  * Team's TLS client: BearSSL with opencrypto.library doing the maths, which
  * AmigaChrome runs on its x86 or ARM64 cores. On a real Amiga it all runs
  * as 68k code. docs/AutoDocs-OpenTLS.md in DalsinAI/openamigatls is the API.

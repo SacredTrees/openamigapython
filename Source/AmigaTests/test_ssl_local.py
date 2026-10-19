@@ -1,7 +1,7 @@
 # Local _ssl / ssl smoke tests (no remote hosts).
-# Needs a rebuilt _ssl.module plus opentls.library (default), amitls.library
-# (SSL_CFLAGS_AMITLS build) or AmiSSL 5 (SSL_CFLAGS_AMISSL build).
-# amiga_plugin_rev 12=AmiTLS, 13=AmiSSL, 14=OpenTLS.
+# Needs a rebuilt _ssl.module plus opentls.library (with opencrypto.library).
+# amiga_plugin_rev 14 is the OpenTLS build (12 was AmiTLS and 13 AmiSSL,
+# both removed on 19 October 2026).
 # ASCII only (Python 2.7 / Amiga).
 #
 #   python27 AmigaTests/run.py ssl
@@ -19,9 +19,9 @@ def test_00_dynload_ssl():
     if mod is None:
         return
     rev = getattr(mod, "amiga_plugin_rev", None)
-    check("_ssl.amiga_plugin_rev in (12,13,14)", rev in (12, 13, 14),
-          "got %r (rebuild _ssl.module; 12=AmiTLS 13=AmiSSL 14=OpenTLS)"
-          % (rev,))
+    check("_ssl.amiga_plugin_rev is 14 (OpenTLS)", rev == 14,
+          "got %r (rebuild _ssl.module: 14 is OpenTLS; 12 AmiTLS and"
+          " 13 AmiSSL are gone)" % (rev,))
     check("_ssl has _SSLContext", hasattr(mod, "_SSLContext"))
     check("_ssl has CERT_NONE", hasattr(mod, "CERT_NONE"))
     check("_ssl has PROTOCOL_TLS", hasattr(mod, "PROTOCOL_TLS"))
@@ -31,14 +31,10 @@ def test_00_dynload_ssl():
     if rev is not None:
         print("  NOTE: amiga_plugin_rev =", rev)
         print("  NOTE: OPENSSL_VERSION =", getattr(mod, "OPENSSL_VERSION", "?"))
-        if rev == 14:
-            print("  NOTE: opentls.library %s.%s, accelerated=0x%x" % (
-                getattr(mod, "opentls_lib_version", "?"),
-                getattr(mod, "opentls_lib_revision", "?"),
-                getattr(mod, "opentls_accelerated", 0)))
-        else:
-            print("  NOTE: amitls_lib_revision =",
-                  getattr(mod, "amitls_lib_revision", "?"))
+        print("  NOTE: opentls.library %s.%s, accelerated=0x%x" % (
+            getattr(mod, "opentls_lib_version", "?"),
+            getattr(mod, "opentls_lib_revision", "?"),
+            getattr(mod, "opentls_accelerated", 0)))
     sys.stdout.flush()
 
 

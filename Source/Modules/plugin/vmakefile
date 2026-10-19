@@ -27,26 +27,13 @@ SOCKET_OBJS=$(SRCDIR)/socket_entry.o \
 	$(SRCDIR)/pyamiga_libc.o \
 	$(SRCDIR)/pyamiga_minirt.o
 
-# Default _ssl backend is OpenTLS (opentls.library, BearSSL with
+# The _ssl backend is OpenTLS (opentls.library, BearSSL with
 # opencrypto.library). Assign opentlsinclude: to DalsinAI/openamigatls's
 # include directory (libraries/opentls.h, proto/opentls.h and, for VBCC,
-# inline/opentls_protos.h).
-# AmiTLS (amitls.library): assign amitlsinclude: to the AmiTLS SDK
-# Include_H directory and select SSL_CFLAGS_AMITLS below.
-# AmiSSL (neither -D, the #else in sslmodule.c): assign sslinclude: to
-# AmiSSL SDK Developer/include, then select SSL_CFLAGS_AMISSL below.
-# Delete sslmodule_plugin.o and _ssl.module before switching backends.
-# Do not -I a host-side SDK path; the assign is the public include root.
-#
-# AmiSSL note: OpenSSL 3.6.x / AmiSSL 5 builds import and wrap, but the
-# first SSL_connect dies in SSLERR (want=NOTHING, empty ERR) - see the
-# BUG comment at SSL_connect in Modules/sslmodule.c.
-SSL_CFLAGS_OPENTLS=$(CFLAGS) -DPYAMIGA_USE_OPENTLS -Iopentlsinclude:
-SSL_CFLAGS_AMITLS=$(CFLAGS) -DPYAMIGA_USE_AMITLS -Iamitlsinclude:
-SSL_CFLAGS_AMISSL=$(CFLAGS) -Isslinclude:
-SSL_CFLAGS=$(SSL_CFLAGS_OPENTLS)
-#SSL_CFLAGS=$(SSL_CFLAGS_AMITLS)
-#SSL_CFLAGS=$(SSL_CFLAGS_AMISSL)
+# inline/opentls_protos.h). Do not -I a host-side SDK path; the assign is
+# the public include root. (The AmiTLS and AmiSSL backends were removed on
+# 19 October 2026: the AmigaChrome Team's programs are OpenTLS only.)
+SSL_CFLAGS=$(CFLAGS) -DPYAMIGA_USE_OPENTLS -Iopentlsinclude:
 
 SSL_OBJS=$(SRCDIR)/ssl_entry.o \
 	$(SRCDIR)/sslmodule_plugin.o \
@@ -80,7 +67,6 @@ $(SRCDIR)/ssl_entry.o: $(SRCDIR)/ssl_entry.c Include/pyamiga_plugin.h \
 
 $(SRCDIR)/sslmodule_plugin.o: $(SRCDIR)/sslmodule_plugin.c \
 		Modules/sslmodule.c Modules/sslmodule_opentls.c \
-		Modules/sslmodule_amitls.c \
 		Include/pyamiga_plugin.h $(SRCDIR)/pyamiga_redir.h
 	$(CC) $(CONFIG) $(SSL_CFLAGS) -o $@ $(SRCDIR)/sslmodule_plugin.c
 
