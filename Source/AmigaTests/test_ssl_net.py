@@ -5,12 +5,10 @@
 #   connect((hostname, 443)) + ssl.wrap_socket(sock) + send/recv
 # Also one SSLContext.wrap_socket(..., server_hostname=) path (SNI).
 #
-# AmiTLS rev 12 maps peer-close READ_FAILED to recv ''.
-# OpenTLS rev 14 also runs a verified context (create_default_context:
-# CERT_REQUIRED + check_hostname against S:OpenTLS/ca-bundle.pem) and a
-# settimeout() read.
-# AmiSSL rev 13: OPENSSL_init + SSL_connect; never CloseAmiSSL at exit.
-# Do not settimeout (FIONBIO) on AmiTLS or AmiSSL builds.
+# The OpenTLS build (rev 14) also runs a verified context
+# (create_default_context: CERT_REQUIRED + check_hostname against
+# S:OpenTLS/ca-bundle.pem) and a settimeout() read. (The AmiTLS, 12, and
+# AmiSSL, 13, builds were removed on 19 October 2026.)
 #
 #   python27 AmigaTests/run.py ssl ssl_net
 #   python27 AmigaTests/test_ssl_net.py amiga.com
@@ -46,9 +44,8 @@ def test_00_import_ssl():
         skip("import _ssl", str(e))
         return None
     rev = getattr(_ssl, "amiga_plugin_rev", None)
-    check("_ssl.amiga_plugin_rev in (12,13,14)", rev in (12, 13, 14),
-          "got %r (12=AmiTLS 13=AmiSSL 14=OpenTLS; rebuild _ssl.module)"
-          % (rev,))
+    check("_ssl.amiga_plugin_rev is 14 (OpenTLS)", rev == 14,
+          "got %r (rebuild _ssl.module: 14 is OpenTLS)" % (rev,))
     print("    NOTE: OPENSSL_VERSION =",
           getattr(_ssl, "OPENSSL_VERSION", "?"))
     try:
@@ -113,8 +110,7 @@ def _https_wrap_socket_api(ssl, socket, host, timeout, hard):
         sock.connect((host, 443))
         print("    tcp connect((%r, 443))" % host)
         sys.stdout.flush()
-        # Public API: no server_hostname (AmiTLS must not pass NULL to
-        # TlsAttachSocket -- that was 8813 Invalid handle).
+        # Public API: no server_hostname, as users type it.
         sslobj = ssl.wrap_socket(sock)
         print("    ssl.wrap_socket ok")
         sys.stdout.flush()

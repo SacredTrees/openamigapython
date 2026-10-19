@@ -51,9 +51,7 @@ Amiga filesystems are case-insensitive: only one of `arexx.py` /
 | `icon.library` | `amiga.DiskObject` | RuntimeError on use |
 | `rexxsyslib.library` | `_arexx` / `arexx` | ARexx APIs unavailable |
 | `bsdsocket.library` | `_socket.module` | `import _socket` fails cleanly |
-| `opentls.library` 1+ with `opencrypto.library` | `_ssl.module` (default) | `import _ssl` fails; OpenUp installs both |
-| `amitls.library` | `_ssl.module` (AmiTLS build) | `import _ssl` fails |
-| AmiSSL 5 (`amisslmaster.library`) | `_ssl.module` (AmiSSL build) | `import _ssl` fails |
+| `opentls.library` 1+ with `opencrypto.library` | `_ssl.module` | `import _ssl` fails; OpenUp installs both |
 
 The interpreter starts without `crc.library`; install from Aminet when you need hashing.
 
@@ -63,10 +61,6 @@ Build from `Source/` with VBCC (same as the interpreter):
 
 ```
 Assign opentlsinclude: <DalsinAI/openamigatls include>
-; or for AmiTLS:
-Assign amitlsinclude: <AmiTLS SDK Include_H>
-; or for AmiSSL:
-Assign sslinclude: <AmiSSL SDK Developer/include>
 
 Delete Modules/plugin/sslmodule_plugin.o lib/lib-dynload/_ssl.module
 smake -f Modules/plugin/vmakefile
@@ -86,13 +80,10 @@ The interpreter and the plugins share the plugin ABI
 both together, and copy the new `.module` files into `Python/lib/lib-dynload/`,
 which is what `Tools/release/build_release.py` ships.
 
-`Modules/plugin/vmakefile` selects the `_ssl` backend via `SSL_CFLAGS`:
-
-| `SSL_CFLAGS` | Library | `_ssl.amiga_plugin_rev` |
-|--------------|---------|-------------------------|
-| `SSL_CFLAGS_OPENTLS` (default) | `opentls.library` | 14 |
-| `SSL_CFLAGS_AMITLS` | `amitls.library` | 12 |
-| `SSL_CFLAGS_AMISSL` (experimental) | AmiSSL 5 | 13 |
+The `_ssl` backend is OpenTLS (`opentls.library`; `_ssl.amiga_plugin_rev`
+14). The AmiTLS (rev 12) and AmiSSL (rev 13) backends, once selectable in
+`Modules/plugin/vmakefile`, were removed on 19 October 2026, when the
+AmigaChrome Team moved its programs to OpenTLS only.
 
 OpenTLS (`Modules/sslmodule_opentls.c`) is the AmigaChrome Team's TLS client:
 BearSSL with `opencrypto.library` doing the maths, which AmigaChrome runs on
@@ -112,19 +103,14 @@ What it offers through `ssl.py`:
 - Not offered by OpenTLS API version 1: server sockets, client certificates,
   NPN, `capath`.
 
-AmiSSL builds import and wrap, but `SSL_connect` currently fails with
-`SSLERR` / `want=NOTHING` (empty ERR queue) on live HTTPS. See the BUG
-comment in `Modules/sslmodule.c`.
-
-Flip the commented `SSL_CFLAGS=` line in that vmakefile to switch. After rebuild:
+After a rebuild:
 
 ```
 python27 AmigaTests/run.py ssl ssl_net
 ```
 
-Expect `OPENSSL_VERSION` to show `opentls.library`, AmiTLS or OpenSSL/AmiSSL
-text accordingly; the OpenTLS build also sets `_ssl.amiga_tls_backend` to
-`"opentls"`.
+Expect `OPENSSL_VERSION` to show `opentls.library`, and
+`_ssl.amiga_tls_backend` to be `"opentls"`.
 
 ## Compiler 
 
