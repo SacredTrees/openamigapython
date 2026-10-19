@@ -218,6 +218,20 @@ an unrelated version on the command line. It produces:
 - `dist/staging/OpenUp/Parts/OpenAmigaPython/` — self-contained OpenUp Part
   and payload.
 
+Build `Source/lib/python27.zip` from the current `Lib/` first
+(`python3 Tools/amiga/mkpythonzip.py Lib lib/python27.zip` in `Source/`), so
+the release carries the `Lib/` of the commit it is tagged at.
+
+A GitHub release carries both as LhA archives, with a `SHA256SUMS` of the
+archives:
+
+- `OpenAmigaPython-<version>-AmigaOS3.lha`: the drawer and its icon, to copy
+  anywhere;
+- `OpenAmigaPython-<version>-OpenUp.lha`: `OpenUp/Parts/OpenAmigaPython/`. It
+  unpacks into an OpenUp drawer (then `OpenUpTool INSTALL
+  Parts/OpenAmigaPython`), and OpenUp's `tools/build_pack.py
+  --openamigapython` takes it into the pack, checked by its sha256.
+
 The OpenUp install is versioned below
 `SYS:Tools/OpenAmigaPython/<version>/`. OpenUp owns both startup entries:
 `Assign Python:` selects that version and `Path Python: ADD` provides the
